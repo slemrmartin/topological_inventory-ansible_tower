@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+lib = File.expand_path("../lib", __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+STDOUT.sync = true
+
+require "bundler/setup"
+require "topological_inventory/ansible_tower/collector"
+
+def parse_args
+  require 'optimist'
+  opts = Optimist.options do
+    opt :source, "Inventory Source UID", :type => :string, :required => ENV["SOURCE_UID"].nil?, :default => ENV["SOURCE_UID"]
+    opt :hostname, "Hostname of the Ansible Tower master node", :type => :string, :required => ENV["OPENSHIFT_HOSTNAME"].nil?, :default => ENV["OPENSHIFT_HOSTNAME"]
+    opt :port, "Port of the OpenShift master node", :type => :int, :required => false, :default => (ENV["OPENSHIFT_PORT"] || 8443).to_i
+    opt :ingress_api, "Hostname of the ingress-api route", :type => :string, :default => ENV["INGRESS_API"] || "http://localhost:9292"
+  end
+
+  opts
+end
+
+args = parse_args
+
+ingress_api_uri = URI(args[:ingress_api])
+
+TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
+TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
+
+collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], args[:hostname], args[:port], args[:token])
+collector.collect!
