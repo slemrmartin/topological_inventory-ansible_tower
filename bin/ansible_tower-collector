@@ -8,13 +8,37 @@ STDOUT.sync = true
 require "bundler/setup"
 require "topological_inventory/ansible_tower/collector"
 
+#
+# You can add local requires to /lib/require.dev.rb
+#
+require_dev_path = File.join(lib, "require.dev.rb")
+require require_dev_path if File.exist?(require_dev_path)
+
+#
+# Input args
+# --source      (ENV["SOURCE_UID"])             - core: Source.uid (manager for this collector)
+# --host        (ENV["ANSIBLE_TOWER_HOSTNAME"]) - ansible tower url
+# --port        (ENV["ANSIBLE_TOWER_PORT"])     - ansible tower port
+# --ingress_api (ENV["INGRESS_API"])            - swagger api server, by default *localhost:9292*
+#
 def parse_args
+  defaults = {
+    :scheme      => 'https',
+    :host        => 'dev-ansibletower-3-2.cloudforms.lab.eng.rdu2.redhat.com',
+    :port        => 443,
+    :user        => 'admin',
+    :password    => 'smartvm',
+    :ingress_api => 'http://localhost:9292'
+  }
+
   require 'optimist'
   opts = Optimist.options do
     opt :source, "Inventory Source UID", :type => :string, :required => ENV["SOURCE_UID"].nil?, :default => ENV["SOURCE_UID"]
-    opt :hostname, "Hostname of the Ansible Tower master node", :type => :string, :required => ENV["OPENSHIFT_HOSTNAME"].nil?, :default => ENV["OPENSHIFT_HOSTNAME"]
-    opt :port, "Port of the OpenShift master node", :type => :int, :required => false, :default => (ENV["OPENSHIFT_PORT"] || 8443).to_i
-    opt :ingress_api, "Hostname of the ingress-api route", :type => :string, :default => ENV["INGRESS_API"] || "http://localhost:9292"
+    opt :scheme, "Protocol scheme for connecting to the AnsibleTower REST API, default: https", :type => :string, :required => ENV["ENDPOINT_SCHEME"].nil?, :default => ENV["ENDPOINT_SCHEME"] || defaults[:scheme]
+    opt :host, "IP address or hostname of the Ansible Tower REST API", :type => :string, :required => ENV["ENDPOINT_HOST"].nil?, :default => ENV["ENDPOINT_HOST"] || defaults[:host]
+    opt :user, "Username to AnsibleTower", :type => :string, :required => ENV["ENDPOINT_USER"].nil?, :default => ENV["ENDPOINT_USER"] || defaults[:user]
+    opt :password, "Password to Ansible Tower", :type => :string, :required => ENV["ENDPOINT_PASSWORD"].nil?, :default => ENV["ENDPOINT_PASSWORD"] || defaults[:password]
+    opt :ingress_api, "Hostname of the ingress-api route", :type => :string, :default => ENV["INGRESS_API"] || defaults[:ingress_api]
   end
 
   opts
@@ -27,5 +51,5 @@ ingress_api_uri = URI(args[:ingress_api])
 TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
 TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
 
-collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], args[:hostname], args[:port], args[:token])
+collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], "#{args[:scheme]}://#{args[:host]}", args[:user], args[:password])
 collector.collect!

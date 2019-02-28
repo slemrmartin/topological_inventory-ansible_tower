@@ -5,9 +5,11 @@ gem "concurrent-ruby"
 gem "more_core_extensions"
 gem "optimist"
 gem "rake"
+gem "manageiq-loggers", "~> 0.1.1"
+
+gem "ansible_tower_client", "~> 0.19.0"
 
 gem "topological_inventory-ingress_api-client", :git => "https://github.com/ManageIQ/topological_inventory-ingress_api-client-ruby", :branch => "master"
-gem "topological_inventory-provider_common", :git => "https://github.com/slemrmartin/topological_inventory-provider_common", :branch => "master"
 
 group :development, :test do
   gem "rspec"
