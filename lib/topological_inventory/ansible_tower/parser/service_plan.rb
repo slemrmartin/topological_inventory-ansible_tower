@@ -5,9 +5,7 @@ module TopologicalInventory::AnsibleTower
       # service plan's extra
       # http://data-driven-forms.surge.sh
 
-      # TODO: resource_timestamp missing in tp_inv-ingress_api-client
       def parse_service_plan(template, survey_spec_hash)
-        # binding.pry if [435, 414].include?(template.id.to_i)
         return if survey_spec_hash.blank?
 
         collections.service_plans.build(

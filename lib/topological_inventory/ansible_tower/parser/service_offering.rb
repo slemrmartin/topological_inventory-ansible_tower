@@ -9,7 +9,7 @@ module TopologicalInventory::AnsibleTower
             :source_ref  => template.id,
             :name        => template.name,
             :description => template.description,
-            #:extra     => {:type => template_hash[:type]} # TODO
+            :extra       => {:type => template_hash[:template_type]}
           )
         )
         parse_service_plan(template, template_hash[:survey_spec])
