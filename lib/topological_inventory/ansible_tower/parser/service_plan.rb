@@ -35,9 +35,9 @@ module TopologicalInventory::AnsibleTower
       def convert_survey(survey)
         converted = add_header(survey)
 
-        survey['spec'].each do |input_hash|
+        survey['spec'].to_a.each do |input_hash|
           field = input_common(input_hash)
-          send("add_#{input_hash['type']}_properties".to_sym, input_hash, field) if respond_to?("add_#{input_hash['type']}_properties".to_sym, true)
+          send("add_#{input_hash['type']}_properties!".to_sym, input_hash, field) if respond_to?("add_#{input_hash['type']}_properties!".to_sym, true)
           converted[:schema][:fields] << field
         end
         converted
@@ -63,35 +63,35 @@ module TopologicalInventory::AnsibleTower
           :label        => survey_input['question_name'],
           :helperText   => survey_input['question_description'],
         }
-        add_required_validator(survey_input, output) if survey_input['required']
-        add_min_validator(survey_input, output) unless survey_input['min'].nil?
-        add_max_validator(survey_input, output) unless survey_input['max'].nil?
-        add_choices(survey_input, output) if survey_input['choices'].present?
+        add_required_validator!(survey_input, output) if survey_input['required']
+        add_min_validator!(survey_input, output) unless survey_input['min'].nil?
+        add_max_validator!(survey_input, output) unless survey_input['max'].nil?
+        add_choices!(survey_input, output) if survey_input['choices'].present?
 
         output
       end
 
-      def add_password_properties(_survey_input, output)
+      def add_password_properties!(_survey_input, output)
         output[:type] = 'password'
       end
 
-      def add_integer_properties(_survey_input, output)
+      def add_integer_properties!(_survey_input, output)
         output[:type] = 'number'
       end
-      alias add_float_properties add_integer_properties
+      alias add_float_properties! add_integer_properties!
 
-      def add_multiselect_properties(survey_input, output)
+      def add_multiselect_properties!(survey_input, output)
         output[:initialValue] = survey_input['default'].split("\n")
         output[:multi] = true
       end
 
-      def add_required_validator(survey_input, output)
+      def add_required_validator!(survey_input, output)
         output[:isRequired] = survey_input['required']
         output[:validate] ||= []
         output[:validate] << { :type => 'required-validator' }
       end
 
-      def add_min_validator(survey_input, output)
+      def add_min_validator!(survey_input, output)
         output[:validate] ||= []
         validator_type = %w[integer float].include?(survey_input['type']) ? 'min-number-value' : 'min-length-validator'
         output[:validate] << {
@@ -100,7 +100,7 @@ module TopologicalInventory::AnsibleTower
         }
       end
 
-      def add_max_validator(survey_input, output)
+      def add_max_validator!(survey_input, output)
         output[:validate] ||= []
         validator_type = %w[integer float].include?(survey_input['type']) ? 'max-number-value' : 'max-length-validator'
         output[:validate] << {
@@ -110,7 +110,7 @@ module TopologicalInventory::AnsibleTower
       end
 
       # choices for (multi)select
-      def add_choices(survey_input, output)
+      def add_choices!(survey_input, output)
         output[:options] ||= []
         survey_input['choices'].split("\n").each do |choice|
           output[:options] << {:label => choice, :value => choice}
