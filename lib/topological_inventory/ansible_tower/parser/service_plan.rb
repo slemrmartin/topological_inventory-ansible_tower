@@ -91,21 +91,34 @@ module TopologicalInventory::AnsibleTower
       end
 
       def add_min_validator!(survey_input, output)
-
-        output[:validate] ||= []
-        validator_type = %w[integer float].include?(survey_input['type']) ? 'min-number-value' : 'min-length-validator'
-        output[:validate] << {
-          :type      => validator_type,
-          :threshold => survey_input['min']
-        }
+        if %w[integer float].include?(survey_input['type'])
+          add_value_validator!('min-number-value', survey_input['min'], output)
+        else
+          add_length_validator!('min-length-validator', survey_input['min'], output)
+        end
       end
 
       def add_max_validator!(survey_input, output)
+        if %w[integer float].include?(survey_input['type'])
+          add_value_validator!('max-number-value', survey_input['max'], output)
+        else
+          add_length_validator!('max-length-validator', survey_input['max'], output)
+        end
+      end
+
+      def add_value_validator!(type, value, output)
         output[:validate] ||= []
-        validator_type = %w[integer float].include?(survey_input['type']) ? 'max-number-value' : 'max-length-validator'
         output[:validate] << {
-          :type      => validator_type,
-          :threshold => survey_input['max']
+          :type  => type,
+          :value => value
+        }
+      end
+
+      def add_length_validator!(type, threshold, output)
+        output[:validate] ||= []
+        output[:validate] << {
+          :type      => type,
+          :threshold => threshold
         }
       end
 

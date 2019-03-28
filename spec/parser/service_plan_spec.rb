@@ -95,9 +95,8 @@ describe TopologicalInventory::AnsibleTower::Parser do
   it "converts survey to data-driven forms format" do
     data_driven_forms_hash = parser.send(:convert_survey, survey)
     expect(data_driven_forms_hash).to eq(
-      :type        => "data-driven-forms",
-      :description => "http://data-driven-forms.surge.sh/renderer/form-schemas",
-      :schema      => {
+      :schemaType => "default",
+      :schema     => {
         :title       => "",
         :description => "",
         :fields      => [
@@ -176,8 +175,8 @@ describe TopologicalInventory::AnsibleTower::Parser do
             :label        => "My Int",
             :helperText   => "int desc",
             :validate     => [
-              {:type => "min-number-value", :threshold => 1},
-              {:type => "max-number-value", :threshold => 100}
+              {:type => "min-number-value", :value => 1},
+              {:type => "max-number-value", :value => 100}
             ],
             :type         => "number"
           },
@@ -188,8 +187,8 @@ describe TopologicalInventory::AnsibleTower::Parser do
             :label        => "My float",
             :helperText   => "float desc",
             :validate     => [
-              {:type => "min-number-value", :threshold => -1},
-              {:type => "max-number-value", :threshold => 100.54}
+              {:type => "min-number-value", :value => -1},
+              {:type => "max-number-value", :value => 100.54}
             ],
             :type         => "number"
           }
