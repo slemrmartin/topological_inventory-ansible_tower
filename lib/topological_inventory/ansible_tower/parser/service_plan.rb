@@ -45,9 +45,8 @@ module TopologicalInventory::AnsibleTower
 
       def add_header(survey)
         {
-          :type        => 'data-driven-forms',
-          :description => 'http://data-driven-forms.surge.sh/renderer/form-schemas',
-          :schema      => {
+          :schemaType => 'default',
+          :schema     => {
             :title       => survey['name'],
             :description => survey['description'],
             :fields      => []
@@ -92,6 +91,7 @@ module TopologicalInventory::AnsibleTower
       end
 
       def add_min_validator!(survey_input, output)
+
         output[:validate] ||= []
         validator_type = %w[integer float].include?(survey_input['type']) ? 'min-number-value' : 'min-length-validator'
         output[:validate] << {
