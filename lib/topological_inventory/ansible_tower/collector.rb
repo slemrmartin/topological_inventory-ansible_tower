@@ -30,13 +30,12 @@ module TopologicalInventory::AnsibleTower
 
     attr_accessor :connection_manager, :tower_hostname, :tower_user, :tower_passwd
 
-
     def endpoint_types
-      %w(service_catalog)
+      %w[service_catalog]
     end
 
     def service_catalog_entity_types
-      %w(service_offerings service_instances)
+      %w[service_offerings service_instances]
     end
 
     # Connection to endpoint (for each entity type the same)
