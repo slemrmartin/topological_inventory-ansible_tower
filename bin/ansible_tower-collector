@@ -7,6 +7,7 @@ STDOUT.sync = true
 
 require "bundler/setup"
 require "topological_inventory/ansible_tower/collector"
+require "topological_inventory/ansible_tower/collector/application_metrics"
 
 #
 # You can add local requires to /lib/require.dev.rb
@@ -39,6 +40,8 @@ def parse_args
     opt :user, "Username to AnsibleTower", :type => :string, :required => ENV["ENDPOINT_USER"].nil?, :default => ENV["ENDPOINT_USER"] || defaults[:user]
     opt :password, "Password to Ansible Tower", :type => :string, :required => ENV["ENDPOINT_PASSWORD"].nil?, :default => ENV["ENDPOINT_PASSWORD"] || defaults[:password]
     opt :ingress_api, "Hostname of the ingress-api route", :type => :string, :default => ENV["INGRESS_API"] || defaults[:ingress_api]
+    opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
+        :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
   end
 end
 
@@ -49,5 +52,10 @@ ingress_api_uri = URI(args[:ingress_api])
 TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
 TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
 
-collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], "#{args[:scheme]}://#{args[:host]}", args[:user], args[:password])
-collector.collect!
+begin
+  metrics = TopologicalInventory::AnsibleTower::Collector::ApplicationMetrics.new(args[:metrics_port])
+  collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], "#{args[:scheme]}://#{args[:host]}", args[:user], args[:password], metrics)
+  collector.collect!
+ensure
+  metrics.stop_server
+end
