@@ -32,7 +32,7 @@ def parse_args
   }
 
   require 'optimist'
-  opts = Optimist.options do
+  Optimist.options do
     opt :source, "Inventory Source UID", :type => :string, :required => ENV["SOURCE_UID"].nil?, :default => ENV["SOURCE_UID"]
     opt :scheme, "Protocol scheme for connecting to the AnsibleTower REST API, default: https", :type => :string, :required => ENV["ENDPOINT_SCHEME"].nil?, :default => ENV["ENDPOINT_SCHEME"] || defaults[:scheme]
     opt :host, "IP address or hostname of the Ansible Tower REST API", :type => :string, :required => ENV["ENDPOINT_HOST"].nil?, :default => ENV["ENDPOINT_HOST"] || defaults[:host]
@@ -40,8 +40,6 @@ def parse_args
     opt :password, "Password to Ansible Tower", :type => :string, :required => ENV["ENDPOINT_PASSWORD"].nil?, :default => ENV["ENDPOINT_PASSWORD"] || defaults[:password]
     opt :ingress_api, "Hostname of the ingress-api route", :type => :string, :default => ENV["INGRESS_API"] || defaults[:ingress_api]
   end
-
-  opts
 end
 
 args = parse_args
