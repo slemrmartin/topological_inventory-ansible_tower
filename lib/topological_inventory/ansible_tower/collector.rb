@@ -11,13 +11,14 @@ module TopologicalInventory::AnsibleTower
     require "topological_inventory/ansible_tower/collector/service_catalog"
     include TopologicalInventory::AnsibleTower::Collector::ServiceCatalog
 
-    def initialize(source, tower_hostname, tower_user, tower_passwd)
+    def initialize(source, tower_hostname, tower_user, tower_passwd, metrics)
       super(source, :default_limit => 5)
 
       self.connection_manager = TopologicalInventory::AnsibleTower::Connection.new
       self.tower_hostname = tower_hostname
       self.tower_user = tower_user
       self.tower_passwd = tower_passwd
+      self.metrics = metrics
     end
 
     def collect!
@@ -28,7 +29,8 @@ module TopologicalInventory::AnsibleTower
 
     private
 
-    attr_accessor :connection_manager, :tower_hostname, :tower_user, :tower_passwd
+    attr_accessor :connection_manager, :tower_hostname, :tower_user, :tower_passwd,
+                  :metrics
 
     def endpoint_types
       %w[service_catalog]
@@ -86,8 +88,9 @@ module TopologicalInventory::AnsibleTower
       # connection.api.jobs.all
       # connection.api.workflow_jobs.all
     rescue => e
+      metrics.record_error
       logger.error("Error collecting :#{entity_type}, message => #{e.message}")
-      raise e
+      logger.error(e)
     end
   end
 end
