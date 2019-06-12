@@ -5,7 +5,7 @@ module TopologicalInventory::AnsibleTower
         job = job_hash[:job]
         collections.service_instances.build(
           parse_base_item(job).merge(
-            :source_ref       => job.id,
+            :source_ref       => job.id.to_s,
             :service_offering => lazy_find(:service_offerings, :source_ref => job.unified_job_template_id.to_s),
             # it creates skeletal service_plans because not all jobs have corresponding survey
             :service_plan     => lazy_find(:service_plans, :source_ref => job.unified_job_template_id.to_s),
