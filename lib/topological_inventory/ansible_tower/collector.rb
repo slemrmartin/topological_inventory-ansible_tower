@@ -63,7 +63,7 @@ module TopologicalInventory::AnsibleTower
         if cnt >= limits[entity_type]
           total_parts += 1
           refresh_state_part_uuid = SecureRandom.uuid
-          save_inventory(parser.collections.values, refresh_state_uuid, refresh_state_part_uuid)
+          save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
 
           # re-init
           parser = TopologicalInventory::AnsibleTower::Parser.new
@@ -74,7 +74,7 @@ module TopologicalInventory::AnsibleTower
       if parser.collections.values.present?
         total_parts += 1
         refresh_state_part_uuid = SecureRandom.uuid
-        save_inventory(parser.collections.values, refresh_state_uuid, refresh_state_part_uuid)
+        save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
       end
 
       logger.info("[END] Collecting #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}' - Parts [#{total_parts}]")
@@ -82,15 +82,16 @@ module TopologicalInventory::AnsibleTower
       # Sweeping inactive records
 
       logger.info("[START] Sweeping inactive records for #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'...")
-      sweep_inventory(refresh_state_uuid, total_parts, parser.collections.inventory_collections_names)
+      sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, parser.collections.inventory_collections_names)
       logger.info("[END] Sweeping inactive records for #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'")
-
-      # connection.api.jobs.all
-      # connection.api.workflow_jobs.all
     rescue => e
       metrics.record_error
       logger.error("Error collecting :#{entity_type}, message => #{e.message}")
       logger.error(e)
+    end
+
+    def inventory_name
+      "AnsibleTower"
     end
   end
 end

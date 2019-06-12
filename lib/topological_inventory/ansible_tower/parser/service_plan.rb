@@ -9,7 +9,7 @@ module TopologicalInventory::AnsibleTower
             :source_ref         => template.id.to_s,
             :name               => survey_spec_hash['name'] || '',
             :description        => survey_spec_hash['description'] || '',
-            :create_json_schema => convert_survey(survey_spec_hash).to_json,
+            :create_json_schema => convert_survey(survey_spec_hash),
             :service_offering   => lazy_find(:service_offerings, :source_ref => template.id.to_s),
             :source_created_at  => template.created,
           )

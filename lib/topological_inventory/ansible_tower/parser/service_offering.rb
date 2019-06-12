@@ -6,10 +6,10 @@ module TopologicalInventory::AnsibleTower
 
         service_offering = collections.service_offerings.build(
           parse_base_item(template).merge(
-            :source_ref  => template.id,
-            :name        => template.name,
-            :description => template.description,
-            :extra       => {:type => template_hash[:template_type]}
+            :source_ref  => template.id.to_s,
+            :name        => template.name.to_s,
+            :description => template.description.to_s,
+            :extra       => { :type => template_hash[:template_type] }
           )
         )
         parse_service_plan(template, template_hash[:survey_spec])
