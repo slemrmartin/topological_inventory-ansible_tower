@@ -10,6 +10,7 @@ gem "optimist"
 gem "prometheus_exporter", "~> 0.4.5"
 gem "rake"
 gem "manageiq-loggers", "~> 0.1.1"
+gem "manageiq-messaging", "~> 0.1.2"
 
 gem "ansible_tower_client", "~> 0.19.0"
 
