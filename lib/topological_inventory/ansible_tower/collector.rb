@@ -11,7 +11,7 @@ module TopologicalInventory::AnsibleTower
     require "topological_inventory/ansible_tower/collector/service_catalog"
     include TopologicalInventory::AnsibleTower::Collector::ServiceCatalog
 
-    def initialize(source, tower_hostname, tower_user, tower_passwd, metrics)
+    def initialize(source, tower_hostname, tower_user, tower_passwd, metrics, sleep_poll = 60)
       super(source, :default_limit => 5)
 
       self.connection_manager = TopologicalInventory::AnsibleTower::Connection.new
@@ -19,18 +19,23 @@ module TopologicalInventory::AnsibleTower
       self.tower_user = tower_user
       self.tower_passwd = tower_passwd
       self.metrics = metrics
+      self.sleep_poll = sleep_poll
     end
 
     def collect!
-      entity_types.each do |entity_type|
-        collector_thread(connection_for_entity_type(entity_type), entity_type)
+      loop do
+        entity_types.each do |entity_type|
+          collector_thread(connection_for_entity_type(entity_type), entity_type)
+        end
+
+        sleep(sleep_poll)
       end
     end
 
     private
 
     attr_accessor :connection_manager, :tower_hostname, :tower_user, :tower_passwd,
-                  :metrics
+                  :metrics, :sleep_poll
 
     def endpoint_types
       %w[service_catalog]
@@ -100,3 +105,4 @@ module TopologicalInventory::AnsibleTower
     "AnsibleTower"
   end
 end
+
