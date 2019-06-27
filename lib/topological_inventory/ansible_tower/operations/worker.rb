@@ -1,4 +1,5 @@
 require "topological_inventory/ansible_tower/logging"
+require "topological_inventory/ansible_tower/operations/processor"
 
 module TopologicalInventory
   module AnsibleTower
@@ -28,6 +29,7 @@ module TopologicalInventory
         attr_accessor :messaging_client_opts
 
         def process_message(message)
+          Processor.process!(message)
         rescue => err
           logger.error(err)
           logger.error(err.backtrace.join("\n"))

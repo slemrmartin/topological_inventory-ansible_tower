@@ -12,8 +12,14 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Worker do
 
     it "calls subscribe_messages on the right queue" do
       operations_topic = "platform.topological-inventory.operations-ansible-tower"
+
+      message = double("ManageIQ::Messaging::ReceivedMessage")
+      allow(message).to receive(:ack)
+
       expect(client).to receive(:subscribe_messages)
-        .with(hash_including(:service => operations_topic))
+        .with(hash_including(:service => operations_topic)).and_yield([message])
+      expect(TopologicalInventory::AnsibleTower::Operations::Processor)
+        .to receive(:process!).with(message)
       subject.run
     end
   end
