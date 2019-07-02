@@ -17,12 +17,12 @@ require require_dev_path if File.exist?(require_dev_path)
 
 #
 # Input args
-# --source      (ENV["SOURCE_UID"])             - core: Source.uid (manager for this collector)
-# --scheme      (ENV["ENDPOINT_SCHEME"])        - ansible tower scheme, https by default
-# --host        (ENV["ENDPOINT_HOST"])          - ansible tower url
-# --user        (ENV["ENDPOINT_USER"])          - credentials: username
-# --password    (ENV["ENDPOINT_PASSWORD"])      - credentials: password
-# --ingress_api (ENV["INGRESS_API"])            - ingress api server, by default *localhost:9292*
+# --source      (ENV["SOURCE_UID"])      - core: Source.uid (manager for this collector)
+# --scheme      (ENV["ENDPOINT_SCHEME"]) - ansible tower scheme, https by default
+# --host        (ENV["ENDPOINT_HOST"])   - ansible tower url
+# --user        (ENV["AUTH_USERNAME"])   - credentials: username
+# --password    (ENV["AUTH_PASSWORD"])   - credentials: password
+# --ingress_api (ENV["INGRESS_API"])     - ingress api server, by default *localhost:9292*
 #
 def parse_args
   defaults = {
@@ -35,8 +35,8 @@ def parse_args
     opt :source, "Inventory Source UID", :type => :string, :required => ENV["SOURCE_UID"].nil?, :default => ENV["SOURCE_UID"]
     opt :scheme, "Protocol scheme for connecting to the AnsibleTower REST API, default: https", :type => :string, :required => ENV["ENDPOINT_SCHEME"].nil?, :default => ENV["ENDPOINT_SCHEME"] || defaults[:scheme]
     opt :host, "IP address or hostname of the Ansible Tower REST API", :type => :string, :required => ENV["ENDPOINT_HOST"].nil?, :default => ENV["ENDPOINT_HOST"]
-    opt :user, "Username to AnsibleTower", :type => :string, :required => ENV["ENDPOINT_USER"].nil?, :default => ENV["ENDPOINT_USER"]
-    opt :password, "Password to Ansible Tower", :type => :string, :required => ENV["ENDPOINT_PASSWORD"].nil?, :default => ENV["ENDPOINT_PASSWORD"]
+    opt :user, "Username to AnsibleTower", :type => :string, :required => ENV["AUTH_USERNAME"].nil?, :default => ENV["AUTH_USERNAME"]
+    opt :password, "Password to Ansible Tower", :type => :string, :required => ENV["AUTH_PASSWORD"].nil?, :default => ENV["AUTH_PASSWORD"]
     opt :ingress_api, "Hostname of the ingress-api route", :type => :string, :default => ENV["INGRESS_API"] || defaults[:ingress_api]
     opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
         :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
