@@ -61,7 +61,7 @@ module TopologicalInventory
           Thread.new do
             begin
               poll_order_complete(task_id, source_id, job)
-            rescue => err
+            rescue StandardError => err
               logger.error("[Task #{task_id}] Waiting for complete: #{err}\n#{err.backtrace.join("\n")}")
               update_task(task_id, :state => "completed", :status => "warn", :context => {:error => err.to_s})
             end
@@ -72,7 +72,7 @@ module TopologicalInventory
         def poll_order_complete(task_id, source_id, job)
           context = {
             :service_instance => {
-              :source_id => source_id,
+              :source_id  => source_id,
               :source_ref => job.id
             }
           }
@@ -114,6 +114,7 @@ module TopologicalInventory
             break if service_instance.present?
 
             break if (count += 1) >= timeout_count
+
             sleep(SLEEP_POLL) # seconds
           end
 

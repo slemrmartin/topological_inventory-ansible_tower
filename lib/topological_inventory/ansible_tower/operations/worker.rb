@@ -1,7 +1,6 @@
 require "manageiq-messaging"
 require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/ansible_tower/operations/processor"
-require "pry-byebug"
 
 module TopologicalInventory
   module AnsibleTower
@@ -31,7 +30,7 @@ module TopologicalInventory
 
         def process_message(message)
           Processor.process!(message)
-        rescue => err
+        rescue StandardError => err
           logger.error("#{err}\n#{err.backtrace.join("\n")}")
           raise
         ensure
@@ -44,9 +43,9 @@ module TopologicalInventory
 
         def queue_opts
           {
-            :auto_ack  => false,
-            # :max_bytes => 50_000,
-            :service   => queue_name,
+            :auto_ack    => false,
+            :max_bytes   => 50_000,
+            :service     => queue_name,
             :persist_ref => "topological-inventory-operations-ansible-tower"
           }
         end

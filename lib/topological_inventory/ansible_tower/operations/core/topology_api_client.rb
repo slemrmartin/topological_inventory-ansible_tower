@@ -21,7 +21,6 @@ module TopologicalInventory
             rest_api_path = '/service_instances/{id}'.sub('{' + 'id' + '}', service_instance&.id.to_s)
             topology_api_client.api_client.build_request(:GET, rest_api_path).url
           end
-
         end
       end
     end

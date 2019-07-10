@@ -5,7 +5,7 @@ module TopologicalInventory
     module Operations
       module Core
         class SourcesApiClient < ::SourcesApiClient::ApiClient
-          INTERNAL_API_PATH='//internal/v1.0'.freeze
+          INTERNAL_API_PATH = '//internal/v1.0'.freeze
 
           def initialize(identity = nil)
             super(::SourcesApiClient::Configuration.default)
@@ -21,7 +21,9 @@ module TopologicalInventory
           def fetch_default_endpoint(source_id)
             endpoints = api.list_source_endpoints(source_id)&.data || []
             endpoint = endpoints.find(&:default)
+
             raise "Sources API: Endpoint not found! (source id: #{source_id})" if endpoint.nil?
+
             endpoint
           end
 
@@ -42,7 +44,7 @@ module TopologicalInventory
 
           def fetch_authentication_with_password(auth_id)
             on_internal_api do
-              local_var_path="/authentications/#{auth_id}"
+              local_var_path = "/authentications/#{auth_id}"
 
               query_params = "expose_encrypted_attribute[]=password"
 
@@ -50,9 +52,9 @@ module TopologicalInventory
               return_type = 'Authentication'
               data, _, _ = call_api(:GET, local_var_path,
                                     :header_params => header_params,
-                                    :query_params => query_params,
-                                    :auth_names => ['UserSecurity'],
-                                    :return_type => return_type)
+                                    :query_params  => query_params,
+                                    :auth_names    => ['UserSecurity'],
+                                    :return_type   => return_type)
               data
             end
           end
@@ -74,7 +76,7 @@ module TopologicalInventory
             self.custom_base_path = INTERNAL_API_PATH
             yield
           ensure
-            self.custom_base_path=nil
+            self.custom_base_path = nil
           end
         end
       end

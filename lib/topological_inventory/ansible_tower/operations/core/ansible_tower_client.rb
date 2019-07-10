@@ -57,6 +57,7 @@ module TopologicalInventory
             # This means that api_client:job_template.launch() called job.find(nil), which returns list of jobs
             # => status error was returned, but api_client doesn't return errors
             raise ::AnsibleTowerClient::ResourceNotFoundError, "Job not found" if job.respond_to?(:count)
+
             job
           end
 
@@ -74,7 +75,8 @@ module TopologicalInventory
               end
 
               break if (count += 1) >= timeout_count
-              sleep(SLEEP_POLL) #seconds
+
+              sleep(SLEEP_POLL) # seconds
             end
             job
           end
@@ -115,8 +117,8 @@ module TopologicalInventory
           end
 
           def ansible_tower
-            @connection ||= connection_manager.connect(
-              default_endpoint.host, authentication.username, authentication.password, verify_ssl: verify_ssl_mode
+            @ansible_tower ||= connection_manager.connect(
+              default_endpoint.host, authentication.username, authentication.password, :verify_ssl => verify_ssl_mode
             )
           end
         end
