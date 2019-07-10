@@ -14,6 +14,8 @@ gem "manageiq-messaging", "~> 0.1.2"
 
 gem "ansible_tower_client", "~> 0.19.0"
 
+gem "sources-api-client",                       :git => "https://github.com/ManageIQ/sources-api-client-ruby", :branch => "master"
+gem 'topological_inventory-api-client',         :git => "https://github.com/ManageIQ/topological_inventory-api-client-ruby", :branch => "master"
 gem "topological_inventory-ingress_api-client", :git => "https://github.com/ManageIQ/topological_inventory-ingress_api-client-ruby", :branch => "master"
 
 group :development, :test do
