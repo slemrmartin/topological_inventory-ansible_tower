@@ -45,7 +45,7 @@ module TopologicalInventory
           service_offering = topology_api_client.show_service_offering(service_plan.service_offering_id)
           source_id        = service_plan.source_id
 
-          client = Core::AnsibleTowerClient.new(source_id, task_id, identity)
+          client = ansible_tower_client(source_id, task_id, identity)
 
           logger.info("Ordering #{service_offering.name} #{service_plan.name}...")
           job = client.order_service_plan(service_offering.source_ref, order_params)
@@ -77,7 +77,7 @@ module TopologicalInventory
             }
           }
 
-          client = Core::AnsibleTowerClient.new(source_id, task_id, identity)
+          client = ansible_tower_client(source_id, task_id, identity)
           job = client.wait_for_job_finished(task_id, job, context)
           context[:remote_status] = job.status
 
@@ -123,6 +123,10 @@ module TopologicalInventory
           end
 
           service_instance
+        end
+
+        def ansible_tower_client(source_id, task_id, identity)
+          Core::AnsibleTowerClient.new(source_id, task_id, identity)
         end
       end
     end

@@ -67,12 +67,13 @@ module TopologicalInventory
             timeout_count = POLL_TIMEOUT / SLEEP_POLL
             loop do
               job = ansible_tower.api.jobs.find(job.id)
-              return job if job.finished.present?
 
               if last_status != job.status
                 last_status = job.status
                 update_task(task_id, :state => "running", :status => job_status_to_task_status(job.status), :context => context.merge(:remote_status => job.status))
               end
+
+              return job if job.finished.present?
 
               break if (count += 1) >= timeout_count
 
