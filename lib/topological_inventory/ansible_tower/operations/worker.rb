@@ -1,3 +1,4 @@
+require "manageiq-messaging"
 require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/ansible_tower/operations/processor"
 
@@ -13,12 +14,11 @@ module TopologicalInventory
 
         def run
           # Open a connection to the messaging service
-          require "manageiq-messaging"
           client = ManageIQ::Messaging::Client.open(messaging_client_opts)
 
           logger.info("Topological Inventory AnsibleTower Operations worker started...")
-          client.subscribe_messages(queue_opts) do |messages|
-            messages.each { |message| process_message(message) }
+          client.subscribe_topic(queue_opts) do |message|
+            process_message(message)
           end
         ensure
           client&.close
@@ -30,27 +30,31 @@ module TopologicalInventory
 
         def process_message(message)
           Processor.process!(message)
-        rescue => err
-          logger.error(err)
-          logger.error(err.backtrace.join("\n"))
+        rescue StandardError => err
+          logger.error("#{err}\n#{err.backtrace.join("\n")}")
           raise
         ensure
           message.ack
         end
 
+        def queue_name
+          "platform.topological-inventory.operations-ansible-tower"
+        end
+
         def queue_opts
           {
-            :auto_ack  => false,
-            :max_bytes => 50_000,
-            :service   => "platform.topological-inventory.operations-ansible-tower"
+            :auto_ack    => false,
+            :max_bytes   => 50_000,
+            :service     => queue_name,
+            :persist_ref => "topological-inventory-operations-ansible-tower"
           }
         end
 
         def default_messaging_opts
           {
             :protocol   => :Kafka,
-            :client_ref => "ansible_tower-operations-worker",
-            :group_ref  => "ansible_tower-operations-worker"
+            :client_ref => "topological-inventory-operations-ansible-tower",
+            :group_ref  => "topological-inventory-operations-ansible-tower"
           }
         end
       end
