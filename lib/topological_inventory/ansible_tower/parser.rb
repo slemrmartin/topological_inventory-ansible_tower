@@ -11,9 +11,9 @@ module TopologicalInventory::AnsibleTower
     def initialize(tower_host:)
       super()
 
-      host_url = tower_host
-      host_url = "https://#{host_url}" unless host_url =~ %r{\Ahttps?:\/\/}
-      self.tower_host = host_url
+      uri = URI(tower_host)
+      uri.scheme ||= "https"
+      self.tower_host = uri.to_s
     end
 
     def parse_base_item(entity)

@@ -71,7 +71,7 @@ module TopologicalInventory::AnsibleTower
           save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
 
           # re-init
-          parser = TopologicalInventory::AnsibleTower::Parser.new
+          parser = TopologicalInventory::AnsibleTower::Parser.new(tower_host: tower_hostname)
           cnt = 0
         end
       end
