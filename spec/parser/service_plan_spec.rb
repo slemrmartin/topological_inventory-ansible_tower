@@ -1,5 +1,5 @@
 describe TopologicalInventory::AnsibleTower::Parser do
-  let(:parser) { described_class.new }
+  let(:parser) { described_class.new(:tower_host => 'example.com') }
   let(:survey) do
     {"description" => "",
      "name"        => "",
