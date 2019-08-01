@@ -77,8 +77,13 @@ module TopologicalInventory::AnsibleTower
 
       def add_integer_properties!(_survey_input, output)
         output[:type] = 'number'
+        output[:dataType] = 'integer'
       end
-      alias add_float_properties! add_integer_properties!
+
+      def add_float_properties!(_survey_input, output)
+        output[:type] = 'number'
+        output[:dataType] = 'number'
+      end
 
       def add_multiselect_properties!(survey_input, output)
         output[:initialValue] = survey_input['default'].split("\n")
