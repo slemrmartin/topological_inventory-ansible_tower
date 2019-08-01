@@ -54,7 +54,7 @@ module TopologicalInventory::AnsibleTower
     def collector_thread(connection, entity_type)
       refresh_state_uuid = SecureRandom.uuid
       logger.info("[START] Collecting #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'")
-      parser = TopologicalInventory::AnsibleTower::Parser.new
+      parser = TopologicalInventory::AnsibleTower::Parser.new(tower_host: tower_hostname)
 
       total_parts = 0
       cnt = 0
