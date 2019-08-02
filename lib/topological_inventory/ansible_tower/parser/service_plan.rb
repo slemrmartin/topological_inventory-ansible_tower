@@ -82,7 +82,7 @@ module TopologicalInventory::AnsibleTower
 
       def add_float_properties!(_survey_input, output)
         output[:type] = 'number'
-        output[:dataType] = 'number'
+        output[:dataType] = 'float'
       end
 
       def add_multiselect_properties!(survey_input, output)

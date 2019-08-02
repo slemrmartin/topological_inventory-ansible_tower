@@ -192,7 +192,7 @@ describe TopologicalInventory::AnsibleTower::Parser do
               {:type => "max-number-value", :value => 100.54}
             ],
             :type         => "number",
-            :dataType     => "number"
+            :dataType     => "float"
           }
         ]
       }
