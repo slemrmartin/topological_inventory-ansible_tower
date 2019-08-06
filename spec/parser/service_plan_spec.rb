@@ -178,7 +178,8 @@ describe TopologicalInventory::AnsibleTower::Parser do
               {:type => "min-number-value", :value => 1},
               {:type => "max-number-value", :value => 100}
             ],
-            :type         => "number"
+            :type         => "number",
+            :dataType     => "integer"
           },
           {
             :component    => "text-field",
@@ -190,7 +191,8 @@ describe TopologicalInventory::AnsibleTower::Parser do
               {:type => "min-number-value", :value => -1},
               {:type => "max-number-value", :value => 100.54}
             ],
-            :type         => "number"
+            :type         => "number",
+            :dataType     => "float"
           }
         ]
       }
