@@ -47,8 +47,10 @@ module TopologicalInventory
 
           client = ansible_tower_client(source_id, task_id, identity)
 
+          job_type = parse_svc_offering_type(service_offering)
+
           logger.info("Ordering #{service_offering.name} #{service_plan.name}...")
-          job = client.order_service_plan(service_offering.source_ref, order_params)
+          job = client.order_service_plan(job_type, service_offering.source_ref, order_params)
           logger.info("Ordering #{service_offering.name} #{service_plan.name}...Complete")
 
           poll_order_complete_thread(task_id, source_id, job)
@@ -127,6 +129,15 @@ module TopologicalInventory
 
         def ansible_tower_client(source_id, task_id, identity)
           Core::AnsibleTowerClient.new(source_id, task_id, identity)
+        end
+
+        # Type defined by collector here:
+        # lib/topological_inventory/ansible_tower/parser/service_offering.rb:12
+        def parse_svc_offering_type(service_offering)
+          job_type = service_offering.extra[:type] if service_offering.extra.present?
+
+          raise "Missing service_offering's type: #{service_offering.inspect}" if job_type.blank?
+          job_type
         end
       end
     end
