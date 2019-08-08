@@ -4,7 +4,8 @@ module TopologicalInventory::AnsibleTower
       def parse_service_instance(job_hash)
         job = job_hash[:job]
 
-        external_url = URI.join(self.tower_host, job.url)
+        # Changing API url to UI url
+        external_url = URI.join(self.tower_host, job.url.to_s.gsub(/\A\/api\/v\d+/,"/#"))
 
         collections.service_instances.build(
           parse_base_item(job).merge(
