@@ -5,7 +5,8 @@ module TopologicalInventory::AnsibleTower
         job = job_hash[:job]
 
         # Set to tower UI url
-        external_url = URI.join(self.tower_host, "/#/jobs/playbook/#{job.id}")
+        path = job.type == 'workflow_job' ? 'workflows' : 'jobs/playbook'
+        external_url = File.join(self.tower_host, "/#/#{path}", job.id.to_s)
 
         collections.service_instances.build(
           parse_base_item(job).merge(
@@ -13,7 +14,7 @@ module TopologicalInventory::AnsibleTower
             :service_offering => lazy_find(:service_offerings, :source_ref => job.unified_job_template_id.to_s),
             # it creates skeletal service_plans because not all jobs have corresponding survey
             :service_plan     => lazy_find(:service_plans, :source_ref => job.unified_job_template_id.to_s),
-            :external_url     => external_url.to_s
+            :external_url     => external_url
           )
         )
       end
