@@ -20,19 +20,20 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Processor do
   let(:topology_api_client) { double }
   let(:source_id) { 1 }
   let(:source_ref) { 1000 }
+  let(:service_plan) { double("TopologicalInventoryApiClient::ServicePlan") }
+  let(:service_offering) { double("TopologicalInventoryApiClient::ServiceOffering") }
 
   before do
     @processor = described_class.new(nil, nil, payload)
     allow(@processor).to receive(:logger).and_return(double('null_object').as_null_object)
 
-    service_plan = double("TopologicalInventoryApiClient::ServicePlan")
     allow(service_plan).to receive(:service_offering_id).and_return(1)
     allow(service_plan).to receive(:name).and_return(double)
     allow(service_plan).to receive(:source_id).and_return(source_id)
 
-    service_offering = double("TopologicalInventoryApiClient::ServiceOffering")
     allow(service_offering).to receive(:name).and_return(double)
     allow(service_offering).to receive(:source_ref).and_return(source_ref)
+    allow(service_offering).to receive(:extra).and_return({:type => 'job_template'})
 
     @ansible_tower_client = double
     allow(@ansible_tower_client).to receive(:order_service_plan)
@@ -48,7 +49,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Processor do
     it "orders job" do
       allow(@processor).to receive(:poll_order_complete_thread).and_return(double)
 
-      expect(@ansible_tower_client).to receive(:order_service_plan).with(source_ref, payload['params']['order_params'])
+      expect(@ansible_tower_client).to receive(:order_service_plan).with("job_template", source_ref, payload['params']['order_params'])
       @processor.send(:order_service, payload['params'])
     end
 
@@ -60,6 +61,17 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Processor do
       allow(@ansible_tower_client).to receive(:order_service_plan).and_raise(err_message)
 
       expect(@processor).to receive(:update_task).with(payload['params']['task_id'], :state => "completed", :status => "error", :context => { :error => err_message })
+
+      @processor.send(:order_service, payload['params'])
+    end
+
+    it "raises error when service_offering doesn't have type" do
+      allow(@processor).to receive(:poll_order_complete_thread).and_return(double)
+      allow(@processor).to receive(:update_task).and_return(double)
+
+      allow(service_offering).to receive(:extra).and_return({})
+
+      expect(@processor).to receive(:parse_svc_offering_type).and_raise("Missing service_offering's type: #{service_offering.inspect}")
 
       @processor.send(:order_service, payload['params'])
     end

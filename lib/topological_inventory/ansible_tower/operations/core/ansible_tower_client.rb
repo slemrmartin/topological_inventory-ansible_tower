@@ -49,8 +49,12 @@ module TopologicalInventory
           #       "providerControlParameters":{"namespace":"default"},
           #       ...
           #     }"
-          def order_service_plan(job_template_id, order_params)
-            job_template = ansible_tower.api.job_templates.find(job_template_id)
+          def order_service_plan(job_type, job_template_id, order_params)
+            job_template = if job_type == 'workflow_job_template'
+                             ansible_tower.api.workflow_job_templates.find(job_template_id)
+                           else
+                             ansible_tower.api.job_templates.find(job_template_id)
+                           end
 
             job = job_template.launch(job_values(order_params))
 
@@ -66,7 +70,11 @@ module TopologicalInventory
             last_status = nil
             timeout_count = POLL_TIMEOUT / SLEEP_POLL
             loop do
-              job = ansible_tower.api.jobs.find(job.id)
+              job = if job.type == 'workflow_job'
+                      ansible_tower.api.workflow_jobs.find(job.id)
+                    else
+                      ansible_tower.api.jobs.find(job.id)
+                    end
 
               if last_status != job.status
                 last_status = job.status

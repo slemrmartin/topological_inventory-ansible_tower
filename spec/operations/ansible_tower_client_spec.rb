@@ -25,15 +25,31 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowe
   end
 
   describe "#order_service_plan" do
-    it "launches job_template and returns job" do
-      job_templates, job_template, job = double, double, double
-      allow(@api).to receive(:job_templates).and_return(job_templates)
-      allow(job_templates).to receive(:find).and_return(job_template)
+    let(:job_templates) { double }
+    let(:job_template) { double }
+    let(:job) { double }
 
+    before do
+      allow(job_templates).to receive(:find).and_return(job_template)
       allow(job_template).to receive(:launch).and_return(job)
       expect(job_template).to receive(:launch).with(:extra_vars => order_params['service_parameters'])
+    end
 
-      svc_instance = ansible_tower_client.order_service_plan(1, order_params)
+    it "launches job_template and returns job" do
+      allow(@api).to receive(:job_templates).and_return(job_templates)
+
+      expect(@api).to receive(:job_templates).once
+
+      svc_instance = ansible_tower_client.order_service_plan("job_template", 1, order_params)
+      expect(svc_instance).to eq(job)
+    end
+
+    it "launches workflow and returns workflow job" do
+      allow(@api).to receive(:workflow_job_templates).and_return(job_templates)
+
+      expect(@api).to receive(:workflow_job_templates).once
+
+      svc_instance = ansible_tower_client.order_service_plan("workflow_job_template", 1, order_params)
       expect(svc_instance).to eq(job)
     end
   end
@@ -44,6 +60,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowe
       allow(@api).to receive(:jobs).and_return(@jobs)
       allow(@jobs).to receive(:find).and_return(@job)
       allow(@job).to receive(:id).and_return(123)
+      allow(@job).to receive(:type).and_return("job")
 
       stub_const("#{described_class}::POLL_TIMEOUT", 0.5)
       stub_const("#{described_class}::SLEEP_POLL", 0.1)
@@ -54,6 +71,25 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowe
 
       allow(@job).to receive(:finished).and_return(true)
       expect(@jobs).to receive(:find).once
+
+      expect(@api).to receive(:jobs).exactly(1).times
+      expect(@api).to receive(:workflow_jobs).exactly(0).times
+
+      job = ansible_tower_client.wait_for_job_finished(task_id, @job, {})
+      expect(job.id).to eq(123)
+    end
+
+    it "calls api and searches for workflow_jobs" do
+      allow(@api).to receive(:workflow_jobs).and_return(@jobs)
+      allow(@job).to receive(:status).and_return(nil)
+
+      allow(@job).to receive(:type).and_return("workflow_job")
+
+      allow(@job).to receive(:finished).and_return(true)
+      expect(@jobs).to receive(:find).once
+
+      expect(@api).to receive(:jobs).exactly(0).times
+      expect(@api).to receive(:workflow_jobs).exactly(1).times
 
       job = ansible_tower_client.wait_for_job_finished(task_id, @job, {})
       expect(job.id).to eq(123)
