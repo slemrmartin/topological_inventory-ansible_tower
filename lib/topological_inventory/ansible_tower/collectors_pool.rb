@@ -14,8 +14,12 @@ module TopologicalInventory::AnsibleTower
       File.expand_path("../../../config", File.dirname(__FILE__))
     end
 
-    def new_collector(source)
-      TopologicalInventory::AnsibleTower::Collector.new(source.source, source.host, source.user, source.password, metrics)
+    def path_to_secrets
+      File.expand_path("../../../secret", File.dirname(__FILE__))
+    end
+
+    def new_collector(source, secret)
+      TopologicalInventory::AnsibleTower::Collector.new(source.source, source.host, secret["username"], secret["password"], metrics)
     end
   end
 end
