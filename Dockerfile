@@ -10,7 +10,7 @@ RUN yum -y install --setopt=tsflags=nodocs \
                    && \
     yum clean all
 
-ENV WORKDIR /opt/ansible_tower-collector/
+ENV WORKDIR /opt/ansible-tower-collector/
 WORKDIR $WORKDIR
 
 COPY Gemfile $WORKDIR
