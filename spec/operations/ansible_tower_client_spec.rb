@@ -40,7 +40,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowe
 
       expect(@api).to receive(:job_templates).once
 
-      svc_instance = ansible_tower_client.order_service_plan("job_template", 1, order_params)
+      svc_instance = ansible_tower_client.order_service("job_template", 1, order_params)
       expect(svc_instance).to eq(job)
     end
 
@@ -49,7 +49,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowe
 
       expect(@api).to receive(:workflow_job_templates).once
 
-      svc_instance = ansible_tower_client.order_service_plan("workflow_job_template", 1, order_params)
+      svc_instance = ansible_tower_client.order_service("workflow_job_template", 1, order_params)
       expect(svc_instance).to eq(job)
     end
   end

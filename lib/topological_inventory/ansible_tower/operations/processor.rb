@@ -55,7 +55,7 @@ module TopologicalInventory
           job_type = parse_svc_offering_type(service_offering)
 
           logger.info("Ordering #{service_offering.name}...")
-          job = client.order_service_plan(job_type, service_offering.source_ref, order_params)
+          job = client.order_service(job_type, service_offering.source_ref, order_params)
           logger.info("Ordering #{service_offering.name}...Complete")
 
           poll_order_complete_thread(task_id, source_id, job)
