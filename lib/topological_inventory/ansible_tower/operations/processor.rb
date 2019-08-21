@@ -39,19 +39,24 @@ module TopologicalInventory
         attr_accessor :identity, :model, :method, :params
 
         def order_service(params)
-          task_id, service_plan_id, order_params = params.values_at("task_id", "service_plan_id", "order_params")
+          task_id, service_offering_id, service_plan_id, order_params = params.values_at("task_id", "service_offering_id", "service_plan_id", "order_params")
 
-          service_plan     = topology_api_client.show_service_plan(service_plan_id)
-          service_offering = topology_api_client.show_service_offering(service_plan.service_offering_id)
-          source_id        = service_plan.source_id
+          # @deprecated, ordering by service plan will be removed
+          if service_offering_id.nil? && service_plan_id.present?
+            service_plan     = topology_api_client.show_service_plan(service_plan_id)
+            service_offering_id = service_plan.service_offering_id
+          end
+          service_offering = topology_api_client.show_service_offering(service_offering_id)
+
+          source_id        = service_offering.source_id
 
           client = ansible_tower_client(source_id, task_id, identity)
 
           job_type = parse_svc_offering_type(service_offering)
 
-          logger.info("Ordering #{service_offering.name} #{service_plan.name}...")
-          job = client.order_service_plan(job_type, service_offering.source_ref, order_params)
-          logger.info("Ordering #{service_offering.name} #{service_plan.name}...Complete")
+          logger.info("Ordering #{service_offering.name}...")
+          job = client.order_service(job_type, service_offering.source_ref, order_params)
+          logger.info("Ordering #{service_offering.name}...Complete")
 
           poll_order_complete_thread(task_id, source_id, job)
         rescue StandardError => err

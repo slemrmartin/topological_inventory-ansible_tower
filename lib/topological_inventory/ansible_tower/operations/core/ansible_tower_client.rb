@@ -49,7 +49,7 @@ module TopologicalInventory
           #       "providerControlParameters":{"namespace":"default"},
           #       ...
           #     }"
-          def order_service_plan(job_type, job_template_id, order_params)
+          def order_service(job_type, job_template_id, order_params)
             job_template = if job_type == 'workflow_job_template'
                              ansible_tower.api.workflow_job_templates.find(job_template_id)
                            else
