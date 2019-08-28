@@ -23,11 +23,12 @@ module TopologicalInventory::AnsibleTower
     end
 
     def collect!
-      loop do
-        entity_types.each do |entity_type|
-          collector_thread(connection_for_entity_type(entity_type), entity_type)
-        end
+      until finished?
+        ensure_collector_threads
 
+        collector_threads.each_value do |thread|
+          thread.join
+        end
         sleep(sleep_poll)
       end
     end
