@@ -57,8 +57,8 @@ module TopologicalInventory::AnsibleTower
       parser = TopologicalInventory::AnsibleTower::Parser.new(tower_host: tower_hostname)
 
       total_parts = 0
+      sweep_scope = Set.new
       cnt = 0
-
       # each on ansible_tower_client's enumeration makes pagination requests by itself
       send("get_#{entity_type}", connection).each do |entity|
         cnt += 1
@@ -69,7 +69,7 @@ module TopologicalInventory::AnsibleTower
           total_parts += 1
           refresh_state_part_uuid = SecureRandom.uuid
           save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
-
+          sweep_scope.merge(parser.collections.values.map(&:name))
           # re-init
           parser = TopologicalInventory::AnsibleTower::Parser.new(tower_host: tower_hostname)
           cnt = 0
@@ -80,15 +80,16 @@ module TopologicalInventory::AnsibleTower
         total_parts += 1
         refresh_state_part_uuid = SecureRandom.uuid
         save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
+        sweep_scope.merge(parser.collections.values.map(&:name))
       end
 
       logger.info("[END] Collecting #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}' - Parts [#{total_parts}]")
 
       # Sweeping inactive records
-
-      logger.info("[START] Sweeping inactive records for #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'...")
-      sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, parser.collections.inventory_collections_names)
-      logger.info("[END] Sweeping inactive records for #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'")
+      sweep_scope = sweep_scope.to_a
+      logger.info("[START] Sweeping inactive records for #{sweep_scope} with :refresh_state_uuid => '#{refresh_state_uuid}'...")
+      sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, sweep_scope)
+      logger.info("[END] Sweeping inactive records for #{sweep_scope} with :refresh_state_uuid => '#{refresh_state_uuid}'")
     rescue => e
       metrics.record_error
       logger.error("Error collecting :#{entity_type}, message => #{e.message}")
