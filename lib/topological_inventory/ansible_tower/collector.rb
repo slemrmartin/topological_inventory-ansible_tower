@@ -11,15 +11,14 @@ module TopologicalInventory::AnsibleTower
     require "topological_inventory/ansible_tower/collector/service_catalog"
     include TopologicalInventory::AnsibleTower::Collector::ServiceCatalog
 
-    def initialize(source, tower_hostname, tower_user, tower_passwd, metrics, sleep_poll = 60)
-      super(source, :default_limit => 5)
+    def initialize(source, tower_hostname, tower_user, tower_passwd, metrics, poll_time = 60)
+      super(source, :poll_time => poll_time)
 
       self.connection_manager = TopologicalInventory::AnsibleTower::Connection.new
       self.tower_hostname = tower_hostname
       self.tower_user = tower_user
       self.tower_passwd = tower_passwd
       self.metrics = metrics
-      self.sleep_poll = sleep_poll
     end
 
     def collect!
@@ -29,14 +28,14 @@ module TopologicalInventory::AnsibleTower
         collector_threads.each_value do |thread|
           thread.join
         end
-        sleep(sleep_poll)
+        sleep(poll_time)
       end
     end
 
     private
 
     attr_accessor :connection_manager, :tower_hostname, :tower_user, :tower_passwd,
-                  :metrics, :sleep_poll
+                  :metrics
 
     def endpoint_types
       %w[service_catalog]
