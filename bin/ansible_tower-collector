@@ -81,5 +81,5 @@ begin
   end
 ensure
   pool&.stop!
-  metrics.stop_server
+  metrics&.stop_server
 end
