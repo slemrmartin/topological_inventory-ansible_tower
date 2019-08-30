@@ -1,5 +1,5 @@
 module TopologicalInventory::AnsibleTower
-  class Parser < TopologicalInventoryIngressApiClient::Collector::Parser
+  class Parser < TopologicalInventory::Providers::Common::Collector::Parser
     require "topological_inventory/ansible_tower/parser/service_instance"
     require "topological_inventory/ansible_tower/parser/service_plan"
     require "topological_inventory/ansible_tower/parser/service_offering"
