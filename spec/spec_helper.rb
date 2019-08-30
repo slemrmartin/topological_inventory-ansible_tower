@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "topological_inventory/ansible_tower/collector"
+require "topological_inventory/ansible_tower/collectors_pool"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
