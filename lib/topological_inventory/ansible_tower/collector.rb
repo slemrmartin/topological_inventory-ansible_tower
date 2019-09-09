@@ -54,7 +54,7 @@ module TopologicalInventory::AnsibleTower
     def collector_thread(connection, entity_type)
       refresh_state_uuid = SecureRandom.uuid
       logger.info("[START] Collecting #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'")
-      parser = TopologicalInventory::AnsibleTower::Parser.new(tower_host: tower_hostname)
+      parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
 
       total_parts = 0
       sweep_scope = Set.new
@@ -71,7 +71,7 @@ module TopologicalInventory::AnsibleTower
           save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
           sweep_scope.merge(parser.collections.values.map(&:name))
           # re-init
-          parser = TopologicalInventory::AnsibleTower::Parser.new(tower_host: tower_hostname)
+          parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
           cnt = 0
         end
       end

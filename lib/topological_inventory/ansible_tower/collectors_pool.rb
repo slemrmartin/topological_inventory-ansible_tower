@@ -29,7 +29,10 @@ module TopologicalInventory::AnsibleTower
     end
 
     def new_collector(source, secret)
-      TopologicalInventory::AnsibleTower::Collector.new(source.source, source.host, secret["username"], secret["password"], metrics)
+      url = URI::Generic.build(:scheme => source.scheme.to_s.strip.presence || 'https',
+                               :host   => source.host.to_s.strip,
+                               :port   => source.port.to_s.strip)
+      TopologicalInventory::AnsibleTower::Collector.new(source.source, url.to_s, secret["username"], secret["password"], metrics)
     end
   end
 end

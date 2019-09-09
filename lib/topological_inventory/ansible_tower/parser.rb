@@ -8,12 +8,13 @@ module TopologicalInventory::AnsibleTower
     include TopologicalInventory::AnsibleTower::Parser::ServicePlan
     include TopologicalInventory::AnsibleTower::Parser::ServiceOffering
 
-    def initialize(tower_host:)
+    def initialize(tower_url:)
       super()
-
-      uri = URI(tower_host)
-      uri.scheme ||= "https"
-      self.tower_host = uri.to_s
+      self.tower_url = if tower_url.to_s.index('http').nil?
+                         File.join('https://', tower_url)
+                       else
+                         tower_url
+                       end
     end
 
     def parse_base_item(entity)
@@ -25,6 +26,6 @@ module TopologicalInventory::AnsibleTower
 
     protected
 
-    attr_accessor :tower_host
+    attr_accessor :tower_url
   end
 end
