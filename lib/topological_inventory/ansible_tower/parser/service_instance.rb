@@ -6,7 +6,7 @@ module TopologicalInventory::AnsibleTower
 
         # Set to tower UI url
         path = job.type == 'workflow_job' ? 'workflows' : 'jobs/playbook'
-        external_url = File.join(self.tower_host, "/#/#{path}", job.id.to_s)
+        external_url = File.join(self.tower_url, "/#/#{path}", job.id.to_s)
 
         collections.service_instances.build(
           parse_base_item(job).merge(
