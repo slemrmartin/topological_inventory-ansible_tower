@@ -12,7 +12,7 @@ module TopologicalInventory::AnsibleTower
             :extra       => { :type => template_hash[:template_type] }
           )
         )
-        parse_service_plan(template, template_hash[:survey_spec])
+        parse_service_plan(template, template_hash[:survey_spec]) if template_hash[:survey_spec].present?
         service_offering
       end
     end
