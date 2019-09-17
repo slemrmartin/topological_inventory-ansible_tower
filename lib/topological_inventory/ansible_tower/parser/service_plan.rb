@@ -2,8 +2,7 @@ module TopologicalInventory::AnsibleTower
   class Parser
     module ServicePlan
       def parse_service_plan(template, survey_spec_hash)
-        # Each service_offering must have service_plan to make catalog able to order it
-        survey_spec_hash = {} if survey_spec_hash.nil?
+        return if survey_spec_hash.nil?
 
         collections.service_plans.build(
           parse_base_item(template).merge(
