@@ -16,11 +16,6 @@ module TopologicalInventory
             task = TopologicalInventoryApiClient::Task.new("state" => state, "status" => status, "context" => context)
             topology_api_client.update_task(task_id, task)
           end
-
-          def svc_instance_url(service_instance)
-            rest_api_path = '/service_instances/{id}'.sub('{' + 'id' + '}', service_instance&.id.to_s)
-            topology_api_client.api_client.build_request(:GET, rest_api_path).url
-          end
         end
       end
     end
