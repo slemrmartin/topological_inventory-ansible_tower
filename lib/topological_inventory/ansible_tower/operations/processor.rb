@@ -93,7 +93,7 @@ module TopologicalInventory
             svc_instance = wait_for_service_instance(source_id, job.id)
             if svc_instance.present?
               context[:service_instance][:id] = svc_instance.id
-              context[:service_instance][:url] = svc_instance_url(svc_instance)
+              context[:service_instance][:url] = svc_instance.external_url
             else
               # If we failed to find the service_instance in the topological-inventory-api
               # within 30 minutes then something went wrong.
