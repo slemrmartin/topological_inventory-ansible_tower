@@ -87,16 +87,21 @@ module TopologicalInventory
           client = ansible_tower_client(source_id, task_id, identity)
           job = client.wait_for_job_finished(task_id, job, context)
           context[:remote_status] = job.status
+          task_status = client.job_status_to_task_status(job.status)
 
           if job.status == "successful"
             svc_instance = wait_for_service_instance(source_id, job.id)
             if svc_instance.present?
               context[:service_instance][:id] = svc_instance.id
               context[:service_instance][:url] = svc_instance_url(svc_instance)
+            else
+              # If we failed to find the service_instance in the topological-inventory-api
+              # within 30 minutes then something went wrong.
+              task_status = "error"
             end
           end
 
-          update_task(task_id, :state => "completed", :status => client.job_status_to_task_status(job.status), :context => context)
+          update_task(task_id, :state => "completed", :status => task_status, :context => context)
         end
 
         def wait_for_service_instance(source_id, source_ref)

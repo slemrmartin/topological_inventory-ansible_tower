@@ -18,8 +18,8 @@ module TopologicalInventory
           end
 
           def svc_instance_url(service_instance)
-            rest_api_path = '/service_instances/{id}'.sub('{' + 'id' + '}', service_instance&.id.to_s)
-            topology_api_client.api_client.build_request(:GET, rest_api_path).url
+            return if service_instance.nil?
+            topology_api_client.api_client.build_request(:GET, "/service_instances/#{service_instance.id}").url
           end
         end
       end
