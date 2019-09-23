@@ -98,6 +98,7 @@ module TopologicalInventory
               # If we failed to find the service_instance in the topological-inventory-api
               # within 30 minutes then something went wrong.
               task_status = "error"
+              context[:error] = "Failed to find ServiceInstance by source_id [#{source_id}] source_ref [#{job.id}]"
             end
           end
 
