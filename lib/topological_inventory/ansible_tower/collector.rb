@@ -1,11 +1,11 @@
 require "topological_inventory/ansible_tower/logging"
-require "topological_inventory-ingress_api-client/collector"
+require "topological_inventory/providers/common/collector"
 require "topological_inventory/ansible_tower/connection"
 require "topological_inventory/ansible_tower/parser"
 require "topological_inventory/ansible_tower/iterator"
 
 module TopologicalInventory::AnsibleTower
-  class Collector < TopologicalInventoryIngressApiClient::Collector
+  class Collector < TopologicalInventory::Providers::Common::Collector
     include Logging
 
     require "topological_inventory/ansible_tower/collector/service_catalog"
