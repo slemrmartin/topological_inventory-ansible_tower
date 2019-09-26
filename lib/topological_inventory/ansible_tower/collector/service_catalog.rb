@@ -1,6 +1,16 @@
 module TopologicalInventory::AnsibleTower
   class Collector
     module ServiceCatalog
+      def get_service_inventories(connection)
+        fnc = lambda do |&block|
+          enumerator = connection.api.inventories.all(:page_size => limits[:service_inventories])
+          enumerator.each do |inventory|
+            block.call(inventory)
+          end
+        end
+        TopologicalInventory::AnsibleTower::Iterator.new(fnc, "Couldn't fetch 'service_inventories' of service catalog.")
+      end
+
       def get_service_offerings(connection)
         fnc = lambda do |&block|
           {:job_template          => connection.api.job_templates.all(:page_size => limits[:service_offerings]),
