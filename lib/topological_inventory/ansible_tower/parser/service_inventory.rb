@@ -7,8 +7,8 @@ module TopologicalInventory::AnsibleTower
             :source_ref        => inventory.id.to_s,
             :source_updated_at => inventory.modified,
             :description       => inventory.description,
-            :inventory_type    => inventory.type,
             :extra             => {
+              "type"                            => inventory.type,
               "organization_id"                 => inventory.organization_id,
               "kind"                            => inventory.kind,
               "host_filter"                     => inventory.host_filter,
