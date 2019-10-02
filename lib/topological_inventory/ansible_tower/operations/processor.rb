@@ -9,7 +9,7 @@ module TopologicalInventory
         include Logging
 
         def self.process!(message)
-          model, method = message.headers['message_type'].to_s.split(".")
+          model, method = message.message.to_s.split(".")
           new(model, method, message.payload).process
         end
 
