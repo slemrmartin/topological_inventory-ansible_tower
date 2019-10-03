@@ -5,6 +5,11 @@ require "net/http"
 RSpec.describe TopologicalInventory::AnsibleTower::Collector::ApplicationMetrics do
   subject! { described_class.new(9394) }
   after    { subject.stop_server }
+  around do |example|
+    WebMock.disable!
+    example.run
+    WebMock.enable!
+  end
 
   context "Turned on" do
     it "exposes metrics" do
