@@ -42,7 +42,7 @@ module TopologicalInventory::AnsibleTower
     end
 
     def service_catalog_entity_types
-      %w[service_inventories service_offerings service_instances]
+      %w[service_inventories service_offerings service_instances service_offering_nodes service_instance_nodes]
     end
 
     # Connection to endpoint (for each entity type the same)
