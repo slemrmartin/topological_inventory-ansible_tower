@@ -1,14 +1,18 @@
 module TopologicalInventory::AnsibleTower
   class Parser < TopologicalInventory::Providers::Common::Collector::Parser
     require "topological_inventory/ansible_tower/parser/service_instance"
+    require "topological_inventory/ansible_tower/parser/service_instance_node"
     require "topological_inventory/ansible_tower/parser/service_inventory"
     require "topological_inventory/ansible_tower/parser/service_plan"
     require "topological_inventory/ansible_tower/parser/service_offering"
+    require "topological_inventory/ansible_tower/parser/service_offering_node"
 
     include TopologicalInventory::AnsibleTower::Parser::ServiceInstance
+    include TopologicalInventory::AnsibleTower::Parser::ServiceInstanceNode
     include TopologicalInventory::AnsibleTower::Parser::ServiceInventory
     include TopologicalInventory::AnsibleTower::Parser::ServicePlan
     include TopologicalInventory::AnsibleTower::Parser::ServiceOffering
+    include TopologicalInventory::AnsibleTower::Parser::ServiceOfferingNode
 
     def initialize(tower_url:)
       super()
