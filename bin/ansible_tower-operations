@@ -13,7 +13,7 @@ TopologicalInventoryApiClient.configure do |config|
 end
 
 SourcesApiClient.configure do |config|
-  config.scheme = ENV["SOURCES_SCHEME"]
+  config.scheme = ENV["SOURCES_SCHEME"] || "http"
   config.host   = "#{ENV["SOURCES_HOST"]}:#{ENV["SOURCES_PORT"]}"
 end
 

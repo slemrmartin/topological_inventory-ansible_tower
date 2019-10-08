@@ -25,12 +25,12 @@ module TopologicalInventory
             return
           end
 
-          source = SourcesApiClient::Source.new
+          source = ::SourcesApiClient::Source.new
           source.availability_status = connection_check(source_id)
 
           begin
             api_client.update_source(source_id, source)
-          rescue SourcesApiClient::ApiError => e
+          rescue ::SourcesApiClient::ApiError => e
             logger.error("Failed to update Source id:#{source_id} - #{e.message}")
           end
         end
@@ -49,7 +49,9 @@ module TopologicalInventory
           auth = Core::AuthenticationRetriever.new(auth_id, identity).process
           return STATUS_UNAVAILABLE unless auth
 
-          TopologicalInventory::AnsibleTower::Connection.new.connect(endpoint.host, auth.username, auth.password)
+          connection = ::TopologicalInventory::AnsibleTower::Connection.new
+          connection = connection.connect(endpoint.host, auth.username, auth.password)
+          connection.api.version
 
           STATUS_AVAILABLE
         rescue => e
@@ -58,14 +60,14 @@ module TopologicalInventory
         end
 
         def identity
-          @identity ||= { "x-rh-identity" => Base64.encode64({ "identity" => { "account_number" => params["external_tenant"] }}.to_json) }
+          @identity ||= { "x-rh-identity" => Base64.strict_encode64({ "identity" => { "account_number" => params["external_tenant"] }}.to_json) }
         end
 
         def api_client
           @api_client ||= begin
-            api_client = SourcesApiClient::ApiClient.new
+            api_client = ::SourcesApiClient::ApiClient.new
             api_client.default_headers.merge!(identity)
-            SourcesApiClient::DefaultApi.new(api_client)
+            ::SourcesApiClient::DefaultApi.new(api_client)
           end
         end
       end
