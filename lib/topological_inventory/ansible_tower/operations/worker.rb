@@ -1,6 +1,7 @@
 require "manageiq-messaging"
 require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/ansible_tower/operations/processor"
+require "topological_inventory/ansible_tower/operations/source"
 
 module TopologicalInventory
   module AnsibleTower
