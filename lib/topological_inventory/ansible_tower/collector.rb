@@ -100,10 +100,4 @@ module TopologicalInventory::AnsibleTower
       "AnsibleTower"
     end
   end
-
-  # Used for Save & Sweep Inventory
-  def inventory_name
-    "AnsibleTower"
-  end
 end
-
