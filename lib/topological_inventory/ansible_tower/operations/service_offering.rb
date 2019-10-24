@@ -2,7 +2,7 @@ require "topological_inventory-api-client"
 require "topological_inventory/ansible_tower/operations/core/ansible_tower_client"
 require "topological_inventory/ansible_tower/operations/core/service_order_mixin"
 require "topological_inventory/ansible_tower/operations/core/topology_api_client"
-require "topological_inventory/ansible_tower/operations/core/approval_inventories_parser"
+require "topological_inventory/ansible_tower/operations/approval_inventories/parser"
 
 module TopologicalInventory
   module AnsibleTower
@@ -25,11 +25,11 @@ module TopologicalInventory
           service_offering = topology_api_client.show_service_offering(service_offering_id.to_s)
           prompted_inventory_id = inventory_params['prompted_inventory_id']
 
-          parser = TopologicalInventory::AnsibleTower::Operations::Core::ApprovalInventoriesParser.new(service_offering, prompted_inventory_id)
+          parser = TopologicalInventory::AnsibleTower::Operations::ApprovalInventories::Parser.new(service_offering, prompted_inventory_id)
           inventories = if parser.is_workflow_template?(service_offering)
-                          parser.load_workflow_template_inventories(service_offering)
+                          parser.load_workflow_template_inventories
                         else
-                          [ parser.load_job_template_inventory(service_offering) ]
+                          [ parser.load_job_template_inventory ]
                         end
 
           update_task(task_id, :state => "completed", :status => "ok", :context => { :approval_inventories => inventories })
