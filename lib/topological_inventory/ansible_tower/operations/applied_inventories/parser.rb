@@ -1,10 +1,10 @@
 require "topological_inventory-api-client"
 require "topological_inventory/providers/common/operations/topology_api_client"
-require "topological_inventory/ansible_tower/operations/approval_inventories/tree_item"
+require "topological_inventory/ansible_tower/operations/applied_inventories/tree_item"
 module TopologicalInventory
   module AnsibleTower
     module Operations
-      module ApprovalInventories
+      module AppliedInventories
         #
         # Terminology:
         #
@@ -15,34 +15,37 @@ module TopologicalInventory
         #
         class Parser
           include Logging
-          include TopologyApiClient
+          include Core::TopologyApiClient
 
-          def initialize(root_wf_template, prompted_inventory_id = nil)
+          attr_accessor :identity
+
+          def initialize(identity, root_wf_template, prompted_inventory_id = nil)
+            self.identity = identity
             self.root_tree_item = TreeItem.new(root_wf_template)
 
-            self.prompted_inventory = load_inventory(prompted_inventory_id)
+            self.prompted_inventory = load_inventory(prompted_inventory_id) if prompted_inventory_id
 
-            self.template_inventories = {} # { inventory_id => { template:, inventory:} }
-            self.node_inventories     = {} # { inventory_id => { node:, inventory: } }
+            self.template_inventories = {} # { template => { inventory_id:, inventory:} }
+            self.node_inventories     = {} # { node => { inventory_id:, inventory: } }
           end
 
           # Entrypoint for standalone JobTemplate
           #
-          # @param tree_item [TopologicalInventory::AnsibleTower::Operations::ApprovalInventories::TreeItem] tree node with Job Template
+          # @param tree_item [TopologicalInventory::AnsibleTower::Operations::AppliedInventories::TreeItem] tree node with Job Template
           # @return [TopologicalInventoryApiClient::ServiceInventory, nil]
           def load_job_template_inventory(tree_item = root_tree_item)
             job_template = tree_item.item
             if job_template.service_inventory_id
-              self.template_inventories[job_template.service_inventory_id] = { :template => job_template }
+              template_inventories[job_template] = { :inventory_id => job_template.service_inventory_id}
               load_inventories
             end
 
-            compute_used_inventories(tree_item).first
+            get_inventory(tree_item)
           end
 
           # Entrypoint for Workflow Template
           #
-          # @param tree_item [TopologicalInventory::AnsibleTower::Operations::ApprovalInventories::TreeItem] tree node with Workflow Template
+          # @param tree_item [TopologicalInventory::AnsibleTower::Operations::AppliedInventories::TreeItem] tree node with Workflow Template
           # @return [Array<TopologicalInventoryApiClient::ServiceInventory>]
           def load_workflow_template_inventories(tree_item = root_tree_item)
             load_nodes_and_templates(tree_item)
@@ -52,11 +55,11 @@ module TopologicalInventory
           end
 
           def is_job_template?(template)
-            TopologicalInventory::AnsibleTower::Operations::ApprovalInventories::TreeItem.is_job_template?(template)
+            TreeItem.is_job_template?(template)
           end
 
           def is_workflow_template?(template)
-            TopologicalInventory::AnsibleTower::Operations::ApprovalInventories::TreeItem.is_workflow_template?(template)
+            TreeItem.is_workflow_template?(template)
           end
 
           private
@@ -65,13 +68,13 @@ module TopologicalInventory
                         :template_child_nodes, :template_inventories
 
           # Loads nodes, templates and IDs of all inventories
-          # @param wf_template_tree_item [TopologicalInventory::AnsibleTower::Operations::ApprovalInventories::TreeItem] tree item with Workflow Template
+          # @param wf_template_tree_item [TopologicalInventory::AnsibleTower::Operations::AppliedInventories::TreeItem] tree item with Workflow Template
           def load_nodes_and_templates(wf_template_tree_item)
             load_child_nodes(wf_template_tree_item)
             load_templates_for_nodes(wf_template_tree_item)
           end
 
-          # @param parent_wf_template_tree_item [TopologicalInventory::AnsibleTower::Operations::ApprovalInventories::TreeItem] tree item with Workflow Template
+          # @param parent_wf_template_tree_item [TopologicalInventory::AnsibleTower::Operations::AppliedInventories::TreeItem] tree item with Workflow Template
           def load_child_nodes(parent_wf_template_tree_item)
             root_wf_template = parent_wf_template_tree_item.item
             topology_api_client.list_service_offering_service_nodes(root_wf_template.id).data.each do |node|
@@ -81,7 +84,7 @@ module TopologicalInventory
                                :parent => parent_wf_template_tree_item)
 
               # Set node inventory key for latter one-query load
-              self.node_inventories[node.service_inventory_id] = { :node => node } if node.service_inventory_id
+              self.node_inventories[node] = { :inventory_id => node.service_inventory_id } if node.service_inventory_id
             end
           end
 
@@ -89,7 +92,7 @@ module TopologicalInventory
             child_node_ids = parent_wf_template_tree_item.children.collect { |tree_item| tree_item.item&.id }
 
             # TODO: node_ids should be strings, check if they aren't integers
-            topology_api_client.list_service_offerings(:filter => { :eq => { :id => child_node_ids }}).data.each do |template|
+            topology_api_client.list_service_offerings(:filter => { :id => { :eq => child_node_ids }}).data.each do |template|
               template_tree_item = TreeItem.new(template)
 
               parent_wf_template_tree_item.children.each do |node_tree_item|
@@ -105,7 +108,7 @@ module TopologicalInventory
               end
 
               # Set template inventory key for latter one-query load
-              self.template_inventories[template.service_inventory_id] = { :template => template } if template.service_inventory_id
+              template_inventories[template] = { :inventory_id => template.service_inventory_id } if template.service_inventory_id
               #
               # Load tree for each child template which is workflow template
               #
@@ -122,18 +125,29 @@ module TopologicalInventory
 
           # Loads inventories for nodes
           def load_node_inventories
-            if (node_inventory_ids = self.node_inventories.keys).present?
-              topology_api_client.list_service_inventories(:filter => { :eq => { :id => node_inventory_ids }}).data.each do |inventory|
-                self.node_inventories[inventory.id][:inventory] = inventory
+            if (nodes = node_inventories.keys).present?
+              node_inventory_ids = nodes.map(&:service_inventory_id).compact.uniq
+              topology_api_client.list_service_inventories(:filter => { :id => { :eq => node_inventory_ids }}).data.each do |inventory|
+                node_inventories.each_pair do |node, hash|
+                  if node.service_inventory_id == inventory.id
+                    hash[:inventory] = inventory
+                    break
+                  end
+                end
               end
             end
           end
 
           # Loads inventories for templates
           def load_template_inventories
-            if (template_inventory_ids = self.template_inventories.keys).present?
-              topology_api_client.list_service_inventories(:filter => { :eq => { :id => template_inventory_ids }}).data.each do |inventory|
-                self.template_inventories[inventory.id][:inventory] = inventory
+            if (templates = template_inventories.keys).present?
+              template_inventory_ids = templates.map(&:service_inventory_id).compact.uniq
+              topology_api_client.list_service_inventories(:filter => { :id => { :eq => template_inventory_ids }}).data.each do |inventory|
+                template_inventories.each_pair do |template, hash|
+                  if template.service_inventory_id == inventory.id
+                    hash[:inventory] = inventory
+                  end
+                end
               end
             end
           end
@@ -162,7 +176,7 @@ module TopologicalInventory
 
             # node is nil if template is standalone JobTemplate or root WorkflowTemplate
             if (node_tree_item = template_tree_item.parent).nil?
-              inventory_for(template) || self.prompted_inventory
+              inventory_for(template) || prompted_inventory
             else
               node = node_tree_item.item
               if prompt_on_launch?(template)
@@ -197,18 +211,10 @@ module TopologicalInventory
 
           def inventory_for(node_or_template)
             if node_or_template.kind_of?(TopologicalInventoryApiClient::ServiceOfferingNode)
-              self.node_inventories[node_or_template.id][:inventory]
+              node_inventories[node_or_template][:inventory]
             else
-              self.template_inventories[node_or_template.id][:inventory]
+              template_inventories[node_or_template][:inventory]
             end
-          end
-
-          def node_for(template)
-            self.templates[template.id][:node]
-          end
-
-          def root_template_for(node)
-            self.nodes[node.id][:root_template]
           end
         end
       end

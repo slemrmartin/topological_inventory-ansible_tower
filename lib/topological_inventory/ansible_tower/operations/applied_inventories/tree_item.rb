@@ -1,7 +1,7 @@
 module TopologicalInventory
   module AnsibleTower
     module Operations
-      module ApprovalInventories
+      module AppliedInventories
         class TreeItem
           attr_accessor :item, :parent, :children
 
