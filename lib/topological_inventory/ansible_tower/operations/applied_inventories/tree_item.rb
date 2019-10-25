@@ -18,7 +18,9 @@ module TopologicalInventory
           end
 
           def self.connect(child:, parent:)
-            self.parent = parent
+            return if child.nil? || parent.nil?
+
+            child.parent = parent
             parent.add_child(child)
           end
 

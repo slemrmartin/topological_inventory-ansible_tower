@@ -35,7 +35,7 @@ module TopologicalInventory
                         end
 
           puts inventories.inspect
-          update_task(task_id, :state => "completed", :status => "ok", :context => { :applied_inventories => inventories })
+          update_task(task_id, :state => "completed", :status => "ok", :context => { :applied_inventories => inventories.map(&:id) })
         rescue StandardError => err
           logger.error("[Task #{task_id}] AppliedInventories error: #{err}\n#{err.backtrace.join("\n")}")
           update_task(task_id, :state => "completed", :status => "error", :context => { :error => err.to_s })
