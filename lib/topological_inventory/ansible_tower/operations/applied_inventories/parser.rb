@@ -175,14 +175,14 @@ module TopologicalInventory
           def get_inventory(template_tree_item)
             template = template_tree_item.item
 
-            # node is nil if template is standalone JobTemplate or root WorkflowTemplate
-            if (node_tree_item = template_tree_item.parent).nil?
-              inventory_for(template) || prompted_inventory
-            else
-              node = node_tree_item.item
-              if prompt_on_launch?(template)
+            if prompt_on_launch?(template)
+              # node is nil if template is standalone JobTemplate or root WorkflowTemplate
+              if (node_tree_item = template_tree_item.parent).nil?
+                prompted_inventory || inventory_for(template)
+              else
+                node                    = node_tree_item.item
                 root_template_tree_item = node_tree_item.parent
-                root_template = root_template_tree_item.item
+                root_template           = root_template_tree_item.item
 
                 root_inventory = if prompt_on_launch?(root_template) && !loop_detected?(template, root_template)
                                    get_inventory(root_template_tree_item) # recursive call
@@ -190,9 +190,9 @@ module TopologicalInventory
                                    inventory_for(root_template)
                                  end
                 root_inventory || inventory_for(node) || inventory_for(template)
-              else
-                inventory_for(template)
               end
+            else
+              inventory_for(template)
             end
           end
 
