@@ -1,6 +1,9 @@
 require "bundler/setup"
 require "topological_inventory/ansible_tower/collectors_pool"
 
+require "helpers/applied_inventories/data"
+require "helpers/applied_inventories/methods"
+
 require "rspec"
 require "webmock/rspec"
 

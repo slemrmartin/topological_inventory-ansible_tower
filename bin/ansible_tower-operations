@@ -10,6 +10,7 @@ queue_port = ENV["QUEUE_PORT"] || 9092
 TopologicalInventoryApiClient.configure do |config|
   config.scheme = "http"
   config.host = "#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_HOST"]}:#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_PORT"]}"
+  config.params_encoding = :rack # needed for {:filter => {:id => [1,2,3]}}
 end
 
 SourcesApiClient.configure do |config|
