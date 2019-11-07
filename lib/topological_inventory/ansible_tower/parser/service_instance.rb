@@ -13,6 +13,12 @@ module TopologicalInventory::AnsibleTower
         path         = job.type == 'workflow_job' ? 'workflows' : 'jobs/playbook'
         external_url = File.join(self.tower_url, "/#/#{path}", job.id.to_s)
 
+        extra = {
+          :started  => job.started,
+          :finished => job.finished,
+          :status   => job.status
+        }
+
         collections.service_instances.build(
           parse_base_item(job).merge(
             :source_ref       => job.id.to_s,
@@ -21,7 +27,8 @@ module TopologicalInventory::AnsibleTower
             :service_plan          => lazy_find(:service_plans, :source_ref => job.unified_job_template_id.to_s),
             :service_inventory     => service_inventory,
             :root_service_instance => root_service_instance,
-            :external_url          => external_url
+            :external_url          => external_url,
+            :extra                 => extra
           )
         )
       end
