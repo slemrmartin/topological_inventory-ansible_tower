@@ -18,6 +18,13 @@ module TopologicalInventory::AnsibleTower
           :finished => job.finished,
           :status   => job.status
         }
+        # launch variables set either manually, by survey values or artifacts from previous job in workflow
+        extra_vars = job.extra_vars_hash
+        extra[:extra_vars] = extra_vars if extra_vars.present?
+        if job.type == 'job'
+          artifacts = job.artifacts.to_s
+          extra[:artifacts] = YAML.safe_load(artifacts) if artifacts.present? && artifacts != '{}' # Artifacts are set by set_stats:data in playbook (Jobs only)
+        end
 
         collections.service_instances.build(
           parse_base_item(job).merge(
