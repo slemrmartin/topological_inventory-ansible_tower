@@ -21,6 +21,7 @@ module TopologicalInventory
 
         def applied_inventories
           task_id, service_offering_id, service_params = params.values_at("task_id", "service_offering_id", "service_parameters")
+          service_params ||= {}
 
           service_offering = topology_api_client.show_service_offering(service_offering_id.to_s)
           prompted_inventory_id = service_params['prompted_inventory_id']
