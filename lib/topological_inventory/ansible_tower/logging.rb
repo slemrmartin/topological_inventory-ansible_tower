@@ -8,6 +8,8 @@ module TopologicalInventory
 
     def self.logger
       @logger ||= TopologicalInventory::Providers::Common::Logger.new
+      @logger.level = Logger::WARN
+      @logger
     end
 
     module Logging

@@ -37,7 +37,7 @@ module TopologicalInventory::AnsibleTower
     private
 
     attr_accessor :connection_manager, :tower_hostname, :tower_user, :tower_passwd,
-                  :metrics
+                  :metrics, :receptor_node, :tenant
 
     def endpoint_types
       %w[service_catalog]
@@ -67,7 +67,8 @@ module TopologicalInventory::AnsibleTower
 
       cnt, sweep_scope, total_parts = 0, Set.new, 0
       # each on ansible_tower_client's enumeration makes pagination requests by itself
-      send("get_#{entity_type}", connection).each do |entity|
+      opts = {:page_size => limits[entity_type]}
+      send("get_#{entity_type}", connection, opts).each do |entity|
         refresh_state_part_collected_at = Time.now.utc
         cnt += 1
 
