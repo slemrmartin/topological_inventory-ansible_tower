@@ -11,6 +11,8 @@ module TopologicalInventory
             task_id, service_offering_id, service_plan_id, order_params = params.values_at(
               "task_id", "service_offering_id", "service_plan_id", "order_params")
 
+            update_task(task_id, :state => "running", :status => "ok", :context => {})
+
             service_plan          = topology_api_client.show_service_plan(service_plan_id.to_s) if service_plan_id
             service_offering_id ||= service_plan.service_offering_id
             service_offering      = topology_api_client.show_service_offering(service_offering_id.to_s)
