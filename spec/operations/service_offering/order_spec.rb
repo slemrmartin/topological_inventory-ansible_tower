@@ -27,6 +27,8 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::ServiceOffering d
     end
 
     it "orders the service plan" do
+      expect(subject).to receive(:update_task).with(1, :state => "running", :status => "ok", :context => {})
+
       topology_api_client = double
       expect(topology_api_client).to receive(:show_service_offering).with("1")
         .and_return(service_offering)

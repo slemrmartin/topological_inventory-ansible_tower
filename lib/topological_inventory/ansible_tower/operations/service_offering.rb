@@ -23,6 +23,8 @@ module TopologicalInventory
           task_id, service_offering_id, service_params = params.values_at("task_id", "service_offering_id", "service_parameters")
           service_params ||= {}
 
+          update_task(task_id, :state => "running", :status => "ok", :context => {})
+
           service_offering = topology_api_client.show_service_offering(service_offering_id.to_s)
           prompted_inventory_id = service_params['prompted_inventory_id']
 

@@ -25,6 +25,10 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::ServiceOffering d
         subject.params['service_parameters']['prompted_inventory_id'] = workflow_definition[:prompted_inventory].id if workflow_definition[:prompted_inventory]
 
         expect(subject).to receive(:update_task).with(nil,
+                                                      :state => "running",
+                                                      :status => "ok",
+                                                      :context => {})
+        expect(subject).to receive(:update_task).with(nil,
                                                       :state => "completed",
                                                       :status => "ok",
                                                       :context => { :applied_inventories => match_array(workflow_definition[:applied_inventories].map(&:id))})
