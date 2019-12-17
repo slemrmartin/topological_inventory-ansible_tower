@@ -19,8 +19,11 @@ module TopologicalInventory
 
           logger.info("Topological Inventory AnsibleTower Operations worker started...")
           client.subscribe_topic(queue_opts) do |message|
+            logger.info("Received message #{message.message}, #{message.payload}")
             process_message(message)
           end
+        rescue => err
+          logger.error("#{err}\n#{err.backtrace.join("\n")}")
         ensure
           client&.close
         end
