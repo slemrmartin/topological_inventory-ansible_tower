@@ -15,6 +15,8 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Worker do
       operations_topic = "platform.topological-inventory.operations-ansible-tower"
 
       message = double("ManageIQ::Messaging::ReceivedMessage")
+      allow(message).to receive(:message)
+      allow(message).to receive(:payload)
       allow(message).to receive(:ack)
 
       expect(client).to receive(:subscribe_topic)
