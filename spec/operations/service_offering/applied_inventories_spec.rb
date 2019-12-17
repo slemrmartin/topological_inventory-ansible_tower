@@ -26,8 +26,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::ServiceOffering d
 
         expect(subject).to receive(:update_task).with(nil,
                                                       :state => "running",
-                                                      :status => "ok",
-                                                      :context => {})
+                                                      :status => "ok")
         expect(subject).to receive(:update_task).with(nil,
                                                       :state => "completed",
                                                       :status => "ok",

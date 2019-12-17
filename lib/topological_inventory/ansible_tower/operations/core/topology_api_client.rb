@@ -12,8 +12,10 @@ module TopologicalInventory
               end
           end
 
-          def update_task(task_id, state:, status:, context:)
-            task = TopologicalInventoryApiClient::Task.new("state" => state, "status" => status, "context" => context)
+          def update_task(task_id, state:, status:, context: nil)
+            params = {"state" => state, "status" => status }
+            params["context"] = context if context
+            task = TopologicalInventoryApiClient::Task.new(params)
             topology_api_client.update_task(task_id, task)
           end
         end
