@@ -25,7 +25,7 @@ module TopologicalInventory::AnsibleTower
     private
 
     def default_api_path
-      "/api/v1".freeze
+      "/api/v2".freeze
     end
   end
 end
