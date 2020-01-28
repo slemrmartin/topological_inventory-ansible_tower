@@ -60,7 +60,7 @@ module TopologicalInventory
         end
 
         def identity
-          @identity ||= { "x-rh-identity" => Base64.strict_encode64({ "identity" => { "account_number" => params["external_tenant"] }}.to_json) }
+          @identity ||= { "x-rh-identity" => Base64.strict_encode64({ "identity" => { "account_number" => params["external_tenant"], "user" => { "is_org_admin" => true }}}.to_json) }
         end
 
         def api_client
