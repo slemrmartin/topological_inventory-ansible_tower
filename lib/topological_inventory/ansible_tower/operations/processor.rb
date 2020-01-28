@@ -1,4 +1,6 @@
 require "topological_inventory/ansible_tower/logging"
+require "topological_inventory-api-client"
+require "topological_inventory/ansible_tower/operations/core/topology_api_client"
 require "topological_inventory/ansible_tower/operations/service_offering"
 require "topological_inventory/ansible_tower/operations/service_plan"
 
@@ -7,6 +9,7 @@ module TopologicalInventory
     module Operations
       class Processor
         include Logging
+        include Core::TopologyApiClient
 
         def self.process!(message)
           model, method = message.message.to_s.split(".")
@@ -22,18 +25,32 @@ module TopologicalInventory
         end
 
         def process
-          logger.info("Processing #{model}##{method} [#{params}]...")
+          logger.info(status_log_msg)
 
           impl = "#{Operations}::#{model}".safe_constantize&.new(params, identity)
-          result = impl&.send(method) if impl&.respond_to?(method)
+          if impl&.respond_to?(method)
+            result = impl&.send(method)
 
-          logger.info("Processing #{model}##{method} [#{params}]...Complete")
-          result
+            logger.info(status_log_msg("Complete"))
+            result
+          else
+            logger.warn(status_log_msg("Not Implemented!"))
+            if params['task_id']
+              update_task(params['task_id'],
+                          :state   => "completed",
+                          :status  => "error",
+                          :context => {:error => "#{model}##{method} not implemented"})
+            end
+          end
         end
 
         private
 
         attr_accessor :identity, :model, :method, :params
+
+        def status_log_msg(status = nil)
+          "Processing #{model}##{method} [#{params}]...#{status}"
+        end
       end
     end
   end
