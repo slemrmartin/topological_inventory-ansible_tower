@@ -6,7 +6,7 @@ module TopologicalInventory::AnsibleTower
   class CollectorsPool < TopologicalInventory::Providers::Common::CollectorsPool
     include Logging
 
-    def initialize(config_name, metrics, poll_time: 10)
+    def initialize(config_name, metrics)
       super
     end
 
@@ -32,7 +32,7 @@ module TopologicalInventory::AnsibleTower
       url = URI::Generic.build(:scheme => source.scheme.to_s.strip.presence || 'https',
                                :host   => source.host.to_s.strip,
                                :port   => source.port.to_s.strip)
-      TopologicalInventory::AnsibleTower::Collector.new(source.source, url.to_s, secret["username"], secret["password"], metrics)
+      TopologicalInventory::AnsibleTower::Collector.new(source.source, url.to_s, secret["username"], secret["password"], metrics, :standalone_mode => false)
     end
   end
 end
