@@ -1,6 +1,26 @@
 module TopologicalInventory::AnsibleTower
   class Collector
     module ServiceCatalog
+      def get_service_credentials(connection)
+        fnc = lambda do |&block|
+          enumerator = connection.api.credentials.all(:page_size => limits[:service_credentials])
+          enumerator.each do |service_credential|
+            block.call(service_credential)
+          end
+        end
+        TopologicalInventory::AnsibleTower::Iterator.new(fnc, "Couldn't fetch 'service_credentials' of service catalog.")
+      end
+
+      def get_service_credential_types(connection)
+        fnc = lambda do |&block|
+          enumerator = connection.api.credential_types.all(:page_size => limits[:service_credential_types])
+          enumerator.each do |service_credential_type|
+            block.call(service_credential_type)
+          end
+        end
+        TopologicalInventory::AnsibleTower::Iterator.new(fnc, "Couldn't fetch 'service_credential_type' of service catalog.")
+      end
+
       def get_service_inventories(connection)
         fnc = lambda do |&block|
           enumerator = connection.api.inventories.all(:page_size => limits[:service_inventories])
