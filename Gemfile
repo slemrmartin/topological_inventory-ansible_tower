@@ -4,7 +4,7 @@ plugin 'bundler-inject', '~> 1.1'
 require File.join(Bundler::Plugin.index.load_paths("bundler-inject")[0], "bundler-inject") rescue nil
 
 gem "activesupport", "~> 5.2.2"
-gem "ansible_tower_client", "~> 0.19.0"
+gem "ansible_tower_client", "~> 0.21.0"
 gem "cloudwatchlogger",   "~> 0.2"
 gem "concurrent-ruby"
 gem "manageiq-loggers",   "~> 0.4.0", ">= 0.4.2"
