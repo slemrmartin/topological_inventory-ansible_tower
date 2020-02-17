@@ -38,6 +38,15 @@ module TopologicalInventory::AnsibleTower
             :extra                 => extra
           )
         )
+
+        if job.summary_fields && job_hash[:job_type] == :job
+          job.summary_fields.credentials.each do |credential|
+            collections.service_instance_service_credentials.build(
+                :service_instance   => lazy_find(:service_instances, :source_ref => job.id.to_s),
+                :service_credential => lazy_find(:service_credentials, :source_ref => credential.id.to_s)
+            )
+          end
+        end
       end
     end
   end
