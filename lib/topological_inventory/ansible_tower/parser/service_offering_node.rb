@@ -1,7 +1,8 @@
 module TopologicalInventory::AnsibleTower
   class Parser
     module ServiceOfferingNode
-      def parse_service_offering_node(node)
+      def parse_service_offering_node(offering_node)
+        node = offering_node[:node]
         service_offering_ref = node.summary_fields.unified_job_template&.id&.to_s
         service_offering = lazy_find(:service_offerings, :source_ref => service_offering_ref) if service_offering_ref
 
@@ -26,6 +27,13 @@ module TopologicalInventory::AnsibleTower
             }
           )
         )
+
+        offering_node[:credentials].to_a.each do |credential|
+          collections.service_offering_node_service_credentials.build(
+              :service_offering_node => lazy_find(:service_offering_nodes, :source_ref => node.id.to_s),
+              :service_credential    => lazy_find(:service_credentials, :source_ref => credential.id.to_s)
+          )
+        end
       end
     end
   end

@@ -51,7 +51,8 @@ module TopologicalInventory::AnsibleTower
         fnc = lambda do |&block|
           enumerator = connection.api.workflow_job_template_nodes.all(:page_size => limits[:service_offering_nodes])
           enumerator.each do |service_offering_node|
-            block.call(service_offering_node)
+            credentials = connection.api.workflow_job_template_nodes.find_all_by_url(service_offering_node.related.credentials)
+            block.call(:node => service_offering_node, :credentials => credentials)
           end
         end
         TopologicalInventory::AnsibleTower::Iterator.new(fnc, "Couldn't fetch 'service_offering_nodes' of service catalog.")
@@ -76,7 +77,8 @@ module TopologicalInventory::AnsibleTower
         fnc = lambda do |&block|
           enumerator = connection.api.workflow_job_nodes.all(:page_size => limits[:service_instance_nodes])
           enumerator.each do |service_instance_node|
-            block.call(service_instance_node)
+            credentials = connection.api.workflow_job_nodes.find_all_by_url(service_instance_node.related.credentials)
+            block.call(:node => service_instance_node, :credentials => credentials)
           end
         end
         TopologicalInventory::AnsibleTower::Iterator.new(fnc, "Couldn't fetch 'service_instance_nodes' of service catalog.")
