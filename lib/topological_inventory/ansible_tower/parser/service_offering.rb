@@ -28,6 +28,16 @@ module TopologicalInventory::AnsibleTower
           )
         )
         parse_service_plan(template, template_hash[:survey_spec]) if template_hash[:survey_spec].present?
+
+        if template.summary_fields && template_hash[:template_type] == :job_template
+          template.summary_fields.credentials.each do |credential|
+            collections.service_offering_service_credentials.build(
+              :service_offering   => lazy_find(:service_offerings, :source_ref => template.id.to_s),
+              :service_credential => lazy_find(:service_credentials, :source_ref => credential.id.to_s)
+            )
+          end
+        end
+
         service_offering
       end
     end
