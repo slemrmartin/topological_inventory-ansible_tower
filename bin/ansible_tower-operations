@@ -2,24 +2,50 @@
 
 $LOAD_PATH << File.expand_path("../lib", __dir__)
 require "bundler/setup"
+require "active_support/core_ext/object/blank"
+require "optimist"
 require "topological_inventory/ansible_tower/operations/worker"
 
-queue_host = ENV["QUEUE_HOST"] || "localhost"
-queue_port = ENV["QUEUE_PORT"] || 9092
+def parse_args
+  Optimist.options do
+    opt :queue_host, "Kafka messaging: hostname or IP", :type => :string, :default => ENV["QUEUE_HOST"] || "localhost"
+    opt :queue_port, "Kafka messaging: port", :type => :integer, :default => (ENV["QUEUE_PORT"] || 9092).to_i
+
+    opt :sources_scheme, "Sources API scheme", :type => :string, :default => ENV["SOURCES_SCHEME"] || "http"
+    opt :sources_host, "Sources API host name", :type => :string, :default => ENV["SOURCES_HOST"]
+    opt :sources_port, "Sources API port", :type => :integer, :default => ENV["SOURCES_PORT"].to_i
+
+    opt :topological_scheme, "Topological Inventory API scheme", :type => :string, :default => ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_SCHEME"] || "http"
+    opt :topological_host, "Topological Inventory API host name", :type => :string, :default => ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_HOST"]
+    opt :topological_port, "Topological Inventory API port", :type => :integer, :default => ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_PORT"].to_i
+  end
+end
+
+def check_args(args)
+  %i[queue_host queue_port
+     sources_scheme sources_host sources_port
+     topological_scheme topological_host topological_port].each do |arg|
+    Optimist.die arg, "can't be blank" if args[arg].blank?
+    Optimist.die arg, "can't be zero" if arg.to_s.index('port').present? && args[arg].zero?
+  end
+end
+
+args = parse_args
+check_args(args)
 
 TopologicalInventoryApiClient.configure do |config|
-  config.scheme = "http"
-  config.host = "#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_HOST"]}:#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_PORT"]}"
+  config.scheme = args[:topological_scheme]
+  config.host = "#{args[:topological_host]}:#{args[:topological_port]}"
   config.params_encoding = :rack # needed for {:filter => {:id => [1,2,3]}}
 end
 
 SourcesApiClient.configure do |config|
-  config.scheme = ENV["SOURCES_SCHEME"] || "http"
-  config.host   = "#{ENV["SOURCES_HOST"]}:#{ENV["SOURCES_PORT"]}"
+  config.scheme = args[:sources_scheme] || "http"
+  config.host   = "#{args[:sources_host]}:#{args[:sources_port]}"
 end
 
 begin
-  operations_worker = TopologicalInventory::AnsibleTower::Operations::Worker.new(:host => queue_host, :port => queue_port)
+  operations_worker = TopologicalInventory::AnsibleTower::Operations::Worker.new(:host => args[:queue_host], :port => args[:queue_port])
   operations_worker.run
 rescue => err
   puts err
