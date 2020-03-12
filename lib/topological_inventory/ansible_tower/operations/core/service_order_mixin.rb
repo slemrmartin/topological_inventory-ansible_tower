@@ -11,6 +11,8 @@ module TopologicalInventory
             task_id, service_offering_id, service_plan_id, order_params = params.values_at(
               "task_id", "service_offering_id", "service_plan_id", "order_params")
 
+            logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(:id #{service_offering_id}): order method entered")
+
             update_task(task_id, :state => "running", :status => "ok")
 
             service_plan          = topology_api_client.show_service_plan(service_plan_id.to_s) if service_plan_id
@@ -22,29 +24,31 @@ module TopologicalInventory
 
             job_type = parse_svc_offering_type(service_offering)
 
-            logger.info("Ordering #{service_offering.name}...")
+            logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...")
             job = client.order_service(job_type, service_offering.source_ref, order_params)
-            logger.info("Ordering #{service_offering.name}...Complete")
+            logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...Complete, Job(:id #{job.id}) has launched.")
 
-            poll_order_complete_thread(task_id, source_id, job)
+            poll_order_complete_thread(task_id, source_id, job, service_offering)
           rescue StandardError => err
-            logger.error("[Task #{task_id}] Ordering error: #{err}\n#{err.backtrace.join("\n")}")
+            logger.error("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering} source_ref: #{service_offering.source_ref}): Ordering error: #{err.cause} #{err}\n#{err.backtrace.join("\n")}")
             update_task(task_id, :state => "completed", :status => "error", :context => {:error => err.to_s})
           end
 
-          def poll_order_complete_thread(task_id, source_id, job)
-            Thread.new do
-              begin
-                poll_order_complete(task_id, source_id, job)
-              rescue StandardError => err
-                logger.error("[Task #{task_id}] Waiting for complete: #{err}\n#{err.backtrace.join("\n")}")
-                update_task(task_id, :state => "completed", :status => "warn", :context => {:error => err.to_s})
+          def poll_order_complete_thread(task_id, source_id, job, service_offering)
+            Thread.new(Thread.current[:request_id]) do |request_id|
+              log_with(request_id) do
+                begin
+                  poll_order_complete(task_id, source_id, job, service_offering)
+                rescue StandardError => err
+                  logger.error("ServiceOffering#order: Task(id: #{task_id}) Job(:id #{job.id}) ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}) Waiting for complete: #{err}\n#{err.backtrace.join("\n")}")
+                  update_task(task_id, :state => "completed", :status => "warn", :context => {:error => err.to_s})
+                end
               end
             end
           end
 
           # @param job [AnsibleTowerClient::Job]
-          def poll_order_complete(task_id, source_id, job)
+          def poll_order_complete(task_id, source_id, job, service_offering)
             context = {
               :service_instance => {
                 :source_id  => source_id,
@@ -52,20 +56,34 @@ module TopologicalInventory
               }
             }
 
+            logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Entering poll_order_complete with #{context.inspect}")
+
             client = ansible_tower_client(source_id, task_id, identity)
+
+            logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Waiting for finishing Job(id: #{job.id}) has started.")
+
             job = client.wait_for_job_finished(task_id, job, context)
+
+            logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Waiting has finished for Job(id: #{job.id}, status: #{job.status}).")
+
             context[:remote_status] = job.status
             task_status = client.job_status_to_task_status(job.status)
 
+            logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Waiting to appear Job(id: #{job.id}), Source(id: #{source_id}) has started in Topological Inventory.")
             svc_instance = wait_for_service_instance(source_id, job.id)
+            logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Waiting to appear Job(id: #{job.id}), Source(id: #{source_id}) has finished in Topological Inventory.")
+
             if svc_instance.present?
-              context[:service_instance][:id]  = svc_instance.id
-              context[:service_instance][:url] = svc_instance.external_url
+              logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Job(id: #{job.id}) has appeared as ServiceInstance(id: #{svc_instance.id}) in Topological Inventory")
+              context[:service_instance][:id] = svc_instance.id
+              conReceived mtext[:service_instance][:url] = svc_instance.external_url
             else
               # If we failed to find the service_instance in the topological-inventory-api
               # within 30 minutes then something went wrong.
-              task_status     = "error"
-              context[:error] = "Failed to find ServiceInstance by source_id [#{source_id}] source_ref [#{job.id}]"
+              task_status = "error"
+              error_message = "Failed to find Job(id: #{job.id}) as ServiceInstance by Source(id: #{source_id}) in Topological Inventory"
+              logger.error("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): #{error_message} in Topological Inventory")
+              context[:error] = error_message
             end
 
             update_task(task_id, :state => "completed", :status => task_status, :context => context)
@@ -95,10 +113,6 @@ module TopologicalInventory
               break if (count += 1) >= timeout_count
 
               sleep(SLEEP_POLL) # seconds
-            end
-
-            if service_instance.nil?
-              logger.error("Failed to find service_instance by source_id [#{source_id}] source_ref [#{source_ref}]")
             end
 
             service_instance

@@ -19,11 +19,14 @@ module TopologicalInventory
 
           logger.info("Topological Inventory AnsibleTower Operations worker started...")
           client.subscribe_topic(queue_opts) do |message|
-            logger.info("Received message #{message.message}, #{message.payload}")
-            process_message(message)
+            log_with(message.payload&.fetch_path('request_context','x-rh-insights-request-id')) do
+              model, method = message.message.to_s.split(".")
+              logger.info("Received message #{model}##{method}, #{message.payload}")
+              process_message(message)
+            end
           end
         rescue => err
-          logger.error("#{err}\n#{err.backtrace.join("\n")}")
+          logger.error("#{err.cause}\n#{err.backtrace.join("\n")}")
         ensure
           client&.close
         end
@@ -35,7 +38,9 @@ module TopologicalInventory
         def process_message(message)
           Processor.process!(message)
         rescue StandardError => err
-          logger.error("#{err}\n#{err.backtrace.join("\n")}")
+          model, method = message.message.to_s.split(".")
+          task_id = message.payload&.fetch_path('params','task_id')
+          logger.error("#{model}##{method}: Task(id: #{task_id}) #{err.cause}\n#{err}\n#{err.backtrace.join("\n")}")
           raise
         ensure
           message.ack
