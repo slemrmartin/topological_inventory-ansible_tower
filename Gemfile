@@ -16,7 +16,7 @@ gem "rake"
 gem "rest-client", "~>2.0"
 gem "sources-api-client", "~> 1.0"
 gem "topological_inventory-api-client", "~> 2.0"
-gem "topological_inventory-ingress_api-client", "~> 1.0"
+gem "topological_inventory-ingress_api-client", "~> 1.0.1"
 gem "topological_inventory-providers-common", "~> 0.1"
 group :development, :test do
   gem "rspec"
