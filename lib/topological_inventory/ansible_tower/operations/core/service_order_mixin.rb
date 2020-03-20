@@ -57,17 +57,15 @@ module TopologicalInventory
             context[:remote_status] = job.status
             task_status = client.job_status_to_task_status(job.status)
 
-            if job.status == "successful"
-              svc_instance = wait_for_service_instance(source_id, job.id)
-              if svc_instance.present?
-                context[:service_instance][:id] = svc_instance.id
-                context[:service_instance][:url] = svc_instance.external_url
-              else
-                # If we failed to find the service_instance in the topological-inventory-api
-                # within 30 minutes then something went wrong.
-                task_status = "error"
-                context[:error] = "Failed to find ServiceInstance by source_id [#{source_id}] source_ref [#{job.id}]"
-              end
+            svc_instance = wait_for_service_instance(source_id, job.id)
+            if svc_instance.present?
+              context[:service_instance][:id]  = svc_instance.id
+              context[:service_instance][:url] = svc_instance.external_url
+            else
+              # If we failed to find the service_instance in the topological-inventory-api
+              # within 30 minutes then something went wrong.
+              task_status     = "error"
+              context[:error] = "Failed to find ServiceInstance by source_id [#{source_id}] source_ref [#{job.id}]"
             end
 
             update_task(task_id, :state => "completed", :status => task_status, :context => context)
