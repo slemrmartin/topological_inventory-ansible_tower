@@ -14,8 +14,7 @@ module TopologicalInventory::AnsibleTower
         yield(entity)
       end
     rescue => e
-      logger.warn("#{error_message}. Message: #{e.message}")
-      logger.debug(e.backtrace)
+      logger.error("#{error_message}. Message: #{e.message} #{e.backtrace.join('\n')}")
       []
     end
   end
