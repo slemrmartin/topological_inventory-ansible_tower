@@ -100,8 +100,7 @@ module TopologicalInventory::AnsibleTower
       logger.info("[END] Sweeping inactive records for #{sweep_scope} with :refresh_state_uuid => '#{refresh_state_uuid}'")
     rescue => e
       metrics.record_error
-      logger.error("Error collecting :#{entity_type}, message => #{e.message}")
-      logger.error(e)
+      logger.error("Error collecting: #{entity_type} :refresh_state_uuid => #{refresh_state_uuid}, message => #{e.message} #{e.backtrace.join("\n")}")
     end
 
     def inventory_name
