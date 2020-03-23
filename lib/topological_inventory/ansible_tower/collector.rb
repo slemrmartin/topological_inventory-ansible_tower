@@ -60,15 +60,17 @@ module TopologicalInventory::AnsibleTower
 
     # Thread's main for collecting one entity type's data
     def collector_thread(connection, entity_type)
-      refresh_state_uuid = SecureRandom.uuid
+      refresh_state_uuid, refresh_state_started_at = SecureRandom.uuid, Time.now.utc
       logger.info("[START] Collecting #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'")
       parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
 
       total_parts = 0
       sweep_scope = Set.new
       cnt = 0
+      refresh_state_part_collected_at = nil
       # each on ansible_tower_client's enumeration makes pagination requests by itself
       send("get_#{entity_type}", connection).each do |entity|
+        refresh_state_part_collected_at = Time.now.utc
         cnt += 1
 
         parser.send("parse_#{entity_type.singularize}", entity)
@@ -76,7 +78,7 @@ module TopologicalInventory::AnsibleTower
         if cnt >= limits[entity_type]
           total_parts += 1
           refresh_state_part_uuid = SecureRandom.uuid
-          save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
+          save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
           sweep_scope.merge(parser.collections.values.map(&:name))
           # re-init
           parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
@@ -87,7 +89,7 @@ module TopologicalInventory::AnsibleTower
       if parser.collections.values.present?
         total_parts += 1
         refresh_state_part_uuid = SecureRandom.uuid
-        save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
+        save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
         sweep_scope.merge(parser.collections.values.map(&:name))
       end
 
@@ -96,7 +98,7 @@ module TopologicalInventory::AnsibleTower
       # Sweeping inactive records
       sweep_scope = sweep_scope.to_a
       logger.info("[START] Sweeping inactive records for #{sweep_scope} with :refresh_state_uuid => '#{refresh_state_uuid}'...")
-      sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, sweep_scope)
+      sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, sweep_scope, refresh_state_started_at)
       logger.info("[END] Sweeping inactive records for #{sweep_scope} with :refresh_state_uuid => '#{refresh_state_uuid}'")
     rescue => e
       metrics.record_error
