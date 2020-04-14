@@ -49,7 +49,9 @@ module TopologicalInventory
         attr_accessor :identity, :model, :method, :params
 
         def status_log_msg(status = nil)
-          "Processing #{model}##{method} [#{params}]...#{status}"
+          log_task_text = "Task(id: #{params['task_id']}): " if params['task_id']
+
+          "#{log_task_text}Processing #{model}##{method} [#{params}]...#{status}"
         end
       end
     end
