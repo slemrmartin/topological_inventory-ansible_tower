@@ -65,31 +65,6 @@ module TopologicalInventory
             job
           end
 
-          def wait_for_job_finished(task_id, job, context)
-            count = 0
-            last_status = nil
-            timeout_count = POLL_TIMEOUT / SLEEP_POLL
-            loop do
-              job = if job.type == 'workflow_job'
-                      ansible_tower.api.workflow_jobs.find(job.id)
-                    else
-                      ansible_tower.api.jobs.find(job.id)
-                    end
-
-              if last_status != job.status
-                last_status = job.status
-                update_task(task_id, :state => "running", :status => job_status_to_task_status(job.status), :context => context.merge(:remote_status => job.status))
-              end
-
-              return job if job.finished.present?
-
-              break if (count += 1) >= timeout_count
-
-              sleep(SLEEP_POLL) # seconds
-            end
-            job
-          end
-
           def self.job_status_to_task_status(job_status)
             case job_status
             when 'error', 'failed' then 'error'
