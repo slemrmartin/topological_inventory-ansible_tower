@@ -26,7 +26,7 @@ module TopologicalInventory
 
             logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...")
             job = client.order_service(job_type, service_offering.source_ref, order_params)
-            logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...Complete, Job(:id #{job.id}) has launched.")
+            logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...Complete, Job(:id #{job&.id}) has launched.")
 
             poll_order_complete_thread(task_id, source_id, job, service_offering)
           rescue StandardError => err
