@@ -1,3 +1,5 @@
+require "topological_inventory/ansible_tower/operations/core/ansible_tower_client"
+
 module TopologicalInventory::AnsibleTower
   class Parser < TopologicalInventory::Providers::Common::Collector::Parser
     require "topological_inventory/ansible_tower/parser/service_credential"
@@ -20,11 +22,7 @@ module TopologicalInventory::AnsibleTower
 
     def initialize(tower_url:)
       super()
-      self.tower_url = if tower_url.to_s.index('http').nil?
-                         File.join('https://', tower_url)
-                       else
-                         tower_url
-                       end
+      self.tower_url = tower_client_class.tower_url(tower_url)
     end
 
     def parse_base_item(entity)
@@ -37,5 +35,9 @@ module TopologicalInventory::AnsibleTower
     protected
 
     attr_accessor :tower_url
+
+    def tower_client_class
+      TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowerClient
+    end
   end
 end

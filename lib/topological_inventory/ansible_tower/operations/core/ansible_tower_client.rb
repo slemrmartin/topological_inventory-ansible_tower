@@ -76,6 +76,25 @@ module TopologicalInventory
             self.class.job_status_to_task_status(job_status)
           end
 
+          # Ansible Tower's URL to Job/Workflow
+          def self.job_external_url(job, tower_base_url)
+            path = job.type == 'workflow_job' ? 'workflows' : 'jobs/playbook'
+            File.join(tower_url(tower_base_url), "/#/#{path}", job.id.to_s)
+          end
+
+          def job_external_url(job)
+            tower_host = [default_endpoint.scheme, default_endpoint.host].join('://')
+            self.class.job_external_url(job, tower_host)
+          end
+
+          def self.tower_url(hostname)
+            if hostname.to_s.index('http').nil?
+              File.join('https://', hostname)
+            else
+              hostname
+            end
+          end
+
           private
 
           attr_accessor :identity, :task_id, :source_id

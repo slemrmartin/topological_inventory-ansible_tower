@@ -48,12 +48,20 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::ServicePlan do
       job = double
       allow(job).to receive(:id).and_return(42)
       allow(job).to receive(:status).and_return('successful')
+
+      allow(ansible_tower_client).to receive(:job_external_url).and_return('https://tower.example.com/job/1')
       expect(ansible_tower_client).to receive(:order_service)
         .with(service_offering.extra.dig(:type), service_offering.source_ref, params["order_params"])
         .and_return(job)
 
       expect(subject).to receive(:update_task)
                            .with(1,
+                                 :context => {
+                                   :service_instance => {
+                                     :job_status => 'successful',
+                                     :url        => 'https://tower.example.com/job/1'
+                                   }
+                                 },
                                  :state             => "running",
                                  :status            => ansible_tower_client.job_status_to_task_status(job.status),
                                  :source_id         => '1',

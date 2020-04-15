@@ -28,7 +28,14 @@ module TopologicalInventory
             job = client.order_service(job_type, service_offering.source_ref, order_params)
             logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Job(:id #{job&.id}) has launched.")
 
+            context = {
+              :service_instance => {
+                :job_status => job.status,
+                :url => client.job_external_url(job)
+              }
+            }
             update_task(task_id,
+                        :context           => context,
                         :state             => "running",
                         :status            => client.job_status_to_task_status(job.status),
                         :source_id         => source_id.to_s,
@@ -38,7 +45,9 @@ module TopologicalInventory
             logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...Task updated")
           rescue StandardError => err
             logger.error("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering&.id} source_ref: #{service_offering&.source_ref}): Ordering error: #{err.cause} #{err}\n#{err.backtrace.join("\n")}")
-            update_task(task_id, :state => "completed", :status => "error", :context => {:error => err.to_s})
+            err_context = {:error => err.to_s}
+            err_context = err_context.merge(context) if context.present?
+            update_task(task_id, :state => "completed", :status => "error", :context => err_context)
           end
 
           def ansible_tower_client(source_id, task_id, identity)
