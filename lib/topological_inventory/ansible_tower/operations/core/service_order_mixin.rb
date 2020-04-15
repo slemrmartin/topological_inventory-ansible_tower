@@ -76,7 +76,7 @@ module TopologicalInventory
             if svc_instance.present?
               logger.info("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref}): Job(id: #{job.id}) has appeared as ServiceInstance(id: #{svc_instance.id}) in Topological Inventory")
               context[:service_instance][:id] = svc_instance.id
-              conReceived mtext[:service_instance][:url] = svc_instance.external_url
+              context[:service_instance][:url] = svc_instance.external_url
             else
               # If we failed to find the service_instance in the topological-inventory-api
               # within 30 minutes then something went wrong.
