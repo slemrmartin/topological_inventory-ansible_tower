@@ -90,11 +90,15 @@ module TopologicalInventory
             job
           end
 
-          def job_status_to_task_status(job_status)
+          def self.job_status_to_task_status(job_status)
             case job_status
             when 'error', 'failed' then 'error'
             else 'ok'
             end
+          end
+
+          def job_status_to_task_status(job_status)
+            self.class.job_status_to_task_status(job_status)
           end
 
           private

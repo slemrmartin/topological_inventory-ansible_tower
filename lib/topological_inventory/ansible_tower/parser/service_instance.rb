@@ -1,3 +1,5 @@
+require "topological_inventory/ansible_tower/operations/core/ansible_tower_client"
+
 module TopologicalInventory::AnsibleTower
   class Parser
     module ServiceInstance
@@ -14,9 +16,10 @@ module TopologicalInventory::AnsibleTower
         external_url = File.join(self.tower_url, "/#/#{path}", job.id.to_s)
 
         extra = {
-          :started  => job.started,
-          :finished => job.finished,
-          :status   => job.status
+          :started     => job.started,
+          :finished    => job.finished,
+          :status      => job.status,
+          :task_status => TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowerClient.job_status_to_task_status(job.status)
         }
         # launch variables set either manually, by survey values or artifacts from previous job in workflow
         extra_vars = job.extra_vars_hash
