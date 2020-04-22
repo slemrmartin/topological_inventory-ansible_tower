@@ -13,9 +13,6 @@ module TopologicalInventory
 
           attr_accessor :connection_manager
 
-          SLEEP_POLL = 10
-          POLL_TIMEOUT = 1800
-
           def initialize(source_id, task_id, identity = nil)
             self.identity   = identity
             self.source_id  = source_id

@@ -3,10 +3,6 @@ module TopologicalInventory
     module Operations
       module Core
         module ServiceOrderMixin
-          SLEEP_POLL = 10
-          POLL_TIMEOUT = 1800
-
-
           def order
             task_id, service_offering_id, service_plan_id, order_params = params.values_at(
               "task_id", "service_offering_id", "service_plan_id", "order_params")
