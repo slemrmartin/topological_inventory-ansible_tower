@@ -26,22 +26,43 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::ServiceOffering d
       }
     end
 
-    it "orders the service plan" do
+    let(:ansible_tower_client) { TopologicalInventory::AnsibleTower::Operations::Core::AnsibleTowerClient.new('1', params['task_id']) }
+
+    it "orders the service offering" do
       expect(subject).to receive(:update_task).with(1, :state => "running", :status => "ok")
 
       topology_api_client = double
+      expect(subject).to receive(:topology_api_client).and_return(topology_api_client)
       expect(topology_api_client).to receive(:show_service_offering).with("1")
         .and_return(service_offering)
-      expect(subject).to receive(:topology_api_client).and_return(topology_api_client)
 
-      ansible_tower_client = double
-      expect(ansible_tower_client).to receive(:order_service)
-        .with(service_offering.extra.dig(:type), service_offering.source_ref, params["order_params"])
       expect(subject).to receive(:ansible_tower_client)
         .with(service_offering.source_id, params["task_id"], identity)
         .and_return(ansible_tower_client)
 
-      expect(subject).to receive(:poll_order_complete_thread)
+      job = double
+      allow(job).to receive(:id).and_return(42)
+      allow(job).to receive(:status).and_return('successful')
+
+      allow(ansible_tower_client).to receive(:job_external_url).and_return('https://tower.example.com/job/1')
+      expect(ansible_tower_client).to receive(:order_service)
+        .with(service_offering.extra.dig(:type), service_offering.source_ref, params["order_params"])
+        .and_return(job)
+
+      expect(subject).to receive(:update_task)
+                           .with(1,
+                                 :context => {
+                                   :service_instance => {
+                                     :job_status => 'successful',
+                                     :url        => 'https://tower.example.com/job/1'
+                                   }
+                                 },
+                                 :state             => "running",
+                                 :status            => ansible_tower_client.job_status_to_task_status(job.status),
+                                 :source_id         => '1',
+                                 :target_source_ref => job.id.to_s,
+                                 :target_type       => 'ServiceInstance'
+                           )
       subject.order
     end
   end

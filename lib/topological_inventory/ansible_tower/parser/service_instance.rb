@@ -10,13 +10,13 @@ module TopologicalInventory::AnsibleTower
         service_inventory = lazy_find(:service_inventories, :source_ref => job.inventory_id.to_s) if job.respond_to?(:inventory_id)
 
         # Set to tower UI url
-        path         = job.type == 'workflow_job' ? 'workflows' : 'jobs/playbook'
-        external_url = File.join(self.tower_url, "/#/#{path}", job.id.to_s)
+        external_url = tower_client_class.job_external_url(job, self.tower_url)
 
         extra = {
-          :started  => job.started,
-          :finished => job.finished,
-          :status   => job.status
+          :started     => job.started,
+          :finished    => job.finished,
+          :status      => job.status,
+          :task_status => tower_client_class.job_status_to_task_status(job.status)
         }
         # launch variables set either manually, by survey values or artifacts from previous job in workflow
         extra_vars = job.extra_vars_hash

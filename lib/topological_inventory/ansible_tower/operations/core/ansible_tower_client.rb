@@ -13,9 +13,6 @@ module TopologicalInventory
 
           attr_accessor :connection_manager
 
-          SLEEP_POLL = 10
-          POLL_TIMEOUT = 1800
-
           def initialize(source_id, task_id, identity = nil)
             self.identity   = identity
             self.source_id  = source_id
@@ -65,35 +62,33 @@ module TopologicalInventory
             job
           end
 
-          def wait_for_job_finished(task_id, job, context)
-            count = 0
-            last_status = nil
-            timeout_count = POLL_TIMEOUT / SLEEP_POLL
-            loop do
-              job = if job.type == 'workflow_job'
-                      ansible_tower.api.workflow_jobs.find(job.id)
-                    else
-                      ansible_tower.api.jobs.find(job.id)
-                    end
-
-              if last_status != job.status
-                last_status = job.status
-                update_task(task_id, :state => "running", :status => job_status_to_task_status(job.status), :context => context.merge(:remote_status => job.status))
-              end
-
-              return job if job.finished.present?
-
-              break if (count += 1) >= timeout_count
-
-              sleep(SLEEP_POLL) # seconds
-            end
-            job
-          end
-
-          def job_status_to_task_status(job_status)
+          def self.job_status_to_task_status(job_status)
             case job_status
             when 'error', 'failed' then 'error'
             else 'ok'
+            end
+          end
+
+          def job_status_to_task_status(job_status)
+            self.class.job_status_to_task_status(job_status)
+          end
+
+          # Ansible Tower's URL to Job/Workflow
+          def self.job_external_url(job, tower_base_url)
+            path = job.type == 'workflow_job' ? 'workflows' : 'jobs/playbook'
+            File.join(tower_url(tower_base_url), "/#/#{path}", job.id.to_s)
+          end
+
+          def job_external_url(job)
+            tower_host = [default_endpoint.scheme, default_endpoint.host].join('://')
+            self.class.job_external_url(job, tower_host)
+          end
+
+          def self.tower_url(hostname)
+            if hostname.to_s.index('http').nil?
+              File.join('https://', hostname)
+            else
+              hostname
             end
           end
 
