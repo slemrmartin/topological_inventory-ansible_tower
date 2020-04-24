@@ -3,6 +3,10 @@ module TopologicalInventory
     module Operations
       module Core
         module ServiceOrderMixin
+          # Service Offerings (Job Templates) are launched in AnsibleTower
+          # and Task updated to "running" state.
+          # Update "running" => "complete" happens in persister
+          # - see https://github.com/RedHatInsights/topological_inventory-core/blob/eef46cf31ff69d2aefb0863ef6147f36ff20b9d3/lib/topological_inventory/schema/default.rb#L68
           def order
             task_id, service_offering_id, service_plan_id, order_params = params.values_at(
               "task_id", "service_offering_id", "service_plan_id", "order_params")
