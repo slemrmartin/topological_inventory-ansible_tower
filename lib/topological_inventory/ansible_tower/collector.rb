@@ -61,7 +61,7 @@ module TopologicalInventory::AnsibleTower
     # Thread's main for collecting one entity type's data
     def collector_thread(connection, entity_type)
       refresh_state_uuid, refresh_state_started_at = SecureRandom.uuid, Time.now.utc
-      logger.info("[START] Collecting #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}'")
+      logger.info("[START] Collecting #{entity_type}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}'")
       parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
 
       total_parts = 0
@@ -93,16 +93,16 @@ module TopologicalInventory::AnsibleTower
         sweep_scope.merge(parser.collections.values.map(&:name))
       end
 
-      logger.info("[END] Collecting #{entity_type} with :refresh_state_uuid => '#{refresh_state_uuid}' - Parts [#{total_parts}]")
+      logger.info("[END] Collecting #{entity_type}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}' - Parts [#{total_parts}]")
 
       # Sweeping inactive records
       sweep_scope = sweep_scope.to_a
-      logger.info("[START] Sweeping inactive records for #{sweep_scope} with :refresh_state_uuid => '#{refresh_state_uuid}'...")
+      logger.info("[START] Sweeping inactive records for #{sweep_scope}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}'...")
       sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, sweep_scope, refresh_state_started_at)
-      logger.info("[END] Sweeping inactive records for #{sweep_scope} with :refresh_state_uuid => '#{refresh_state_uuid}'")
+      logger.info("[END] Sweeping inactive records for #{sweep_scope}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}'")
     rescue => e
       metrics.record_error
-      logger.error("Error collecting: #{entity_type} :refresh_state_uuid => #{refresh_state_uuid}, message => #{e.message} #{e.backtrace.join("\n")}")
+      logger.error("Error collecting: #{entity_type}, :source_uid => #{source}, :refresh_state_uuid => #{refresh_state_uuid}, message => #{e.message} #{e.backtrace.join("\n")}")
     end
 
     def inventory_name
