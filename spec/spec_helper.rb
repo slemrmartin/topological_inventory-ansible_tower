@@ -1,3 +1,8 @@
+if ENV['CI']
+  require 'simplecov'
+  SimpleCov.start
+end
+
 require "bundler/setup"
 require "topological_inventory/ansible_tower/collectors_pool"
 
