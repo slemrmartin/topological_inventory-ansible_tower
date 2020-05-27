@@ -20,6 +20,8 @@ gem "topological_inventory-ingress_api-client", "~> 1.0.1"
 gem "topological_inventory-providers-common", "~> 1.0.1"
 group :development, :test do
   gem "rspec"
-  gem "simplecov"
+  gem 'rubocop', "~>0.69.0"
+  gem 'rubocop-performance', "~>1.3"
+  gem "simplecov", "~> 0.17.1"
   gem "webmock"
 end
