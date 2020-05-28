@@ -60,14 +60,12 @@ module TopologicalInventory::AnsibleTower
 
     # Thread's main for collecting one entity type's data
     def collector_thread(connection, entity_type)
-      refresh_state_uuid, refresh_state_started_at = SecureRandom.uuid, Time.now.utc
-      logger.info("[START] Collecting #{entity_type}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}'")
+      refresh_state_uuid, refresh_state_started_at, refresh_state_part_collected_at = SecureRandom.uuid, Time.now.utc, nil
+
+      logger.collecting(:start, source, entity_type, refresh_state_uuid)
       parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
 
-      total_parts = 0
-      sweep_scope = Set.new
-      cnt = 0
-      refresh_state_part_collected_at = nil
+      cnt, sweep_scope, total_parts = 0, Set.new, 0
       # each on ansible_tower_client's enumeration makes pagination requests by itself
       send("get_#{entity_type}", connection).each do |entity|
         refresh_state_part_collected_at = Time.now.utc
@@ -92,17 +90,16 @@ module TopologicalInventory::AnsibleTower
         save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
         sweep_scope.merge(parser.collections.values.map(&:name))
       end
-
-      logger.info("[END] Collecting #{entity_type}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}' - Parts [#{total_parts}]")
+      logger.collecting(:finish, source, entity_type, refresh_state_uuid, total_parts)
 
       # Sweeping inactive records
       sweep_scope = sweep_scope.to_a
-      logger.info("[START] Sweeping inactive records for #{sweep_scope}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}'...")
+      logger.sweeping(:start, source, sweep_scope, refresh_state_uuid)
       sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, sweep_scope, refresh_state_started_at)
-      logger.info("[END] Sweeping inactive records for #{sweep_scope}, :source_uid => #{source}, :refresh_state_uuid => '#{refresh_state_uuid}'")
+      logger.sweeping(:finish, source, sweep_scope, refresh_state_uuid)
     rescue => e
       metrics.record_error
-      logger.error("Error collecting: #{entity_type}, :source_uid => #{source}, :refresh_state_uuid => #{refresh_state_uuid}, message => #{e.message} #{e.backtrace.join("\n")}")
+      logger.collecting_error(source, entity_type, refresh_state_uuid, e)
     end
 
     def inventory_name
