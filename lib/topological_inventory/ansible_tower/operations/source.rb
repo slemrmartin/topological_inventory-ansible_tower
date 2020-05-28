@@ -15,6 +15,8 @@ module TopologicalInventory
           :endpoint_not_found       => "Endpoint not found in Sources API",
         }.freeze
 
+        LAST_CHECKED_AT_THRESHOLD = 5 # minutes
+
         attr_accessor :params, :request_context, :source_id
 
         def initialize(params = {}, request_context = nil)
@@ -25,6 +27,8 @@ module TopologicalInventory
 
         def availability_check
           return if params_missing?
+
+          return if checked_recently?
 
           status, error_message = connection_status
 
@@ -43,12 +47,21 @@ module TopologicalInventory
           is_missing = false
           required_params.each do |attr|
             if (is_missing = params[attr].blank?)
-              logger.error("Source#availability_check - Missing #{attr} for the availability_check request")
+              logger.error("Source#availability_check - Missing #{attr} for the availability_check request [Source ID: #{source_id}]")
               break
             end
           end
 
           is_missing
+        end
+
+        def checked_recently?
+          return false if endpoint.nil?
+
+          checked_recently = endpoint.last_checked_at.present? && endpoint.last_checked_at >= LAST_CHECKED_AT_THRESHOLD.minutes.ago
+          logger.info("Source#availability_check - Skipping, last check at #{endpoint.last_checked_at} [Source ID: #{source_id}] ") if checked_recently
+
+          checked_recently
         end
 
         def connection_status
@@ -59,13 +72,14 @@ module TopologicalInventory
         end
 
         def connection_check
+          check_time
           connection = ::TopologicalInventory::AnsibleTower::Connection.new
           connection = connection.connect(endpoint.host, authentication.username, authentication.password)
           connection.api.version
 
           [STATUS_AVAILABLE, nil]
         rescue => e
-          logger.error("Failed to connect to Source id:#{source_id} - #{e.message}")
+          logger.error("Source#availability_check - Failed to connect to Source id:#{source_id} - #{e.message}")
           [STATUS_UNAVAILABLE, e.message]
         end
 
@@ -79,6 +93,8 @@ module TopologicalInventory
         def update_source(status)
           source = ::SourcesApiClient::Source.new
           source.availability_status = status
+          source.last_checked_at     = check_time
+          source.last_available_at   = check_time if status == STATUS_AVAILABLE
 
           api_client.update_source(source_id, source)
         rescue SourcesApiClient::ApiError => e
@@ -93,8 +109,10 @@ module TopologicalInventory
 
           endpoint_update = SourcesApiClient::Endpoint.new
 
-          endpoint_update.availability_status = status
+          endpoint_update.availability_status       = status
           endpoint_update.availability_status_error = error_message.to_s
+          endpoint_update.last_checked_at           = check_time
+          endpoint_update.last_available_at         = check_time if status == STATUS_AVAILABLE
 
           api_client.update_endpoint(endpoint.id, endpoint_update)
         rescue SourcesApiClient::ApiError => e
@@ -113,6 +131,10 @@ module TopologicalInventory
 
           auth_id = endpoint_authentications.first.id
           @authentication = Core::AuthenticationRetriever.new(auth_id, identity).process
+        end
+
+        def check_time
+          @check_time ||= Time.now.utc
         end
 
         def identity
