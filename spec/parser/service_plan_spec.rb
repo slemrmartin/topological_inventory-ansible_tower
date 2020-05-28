@@ -53,6 +53,18 @@ describe TopologicalInventory::AnsibleTower::Parser do
            "type"                 => "multiplechoice"
          },
          {
+           "question_description" => "Single select - Array choices",
+           "min"                  => nil,
+           "default"              => "",
+           "max"                  => nil,
+           "required"             => true,
+           "choices"              => %w[one two three],
+           "new_question"         => true,
+           "variable"             => "my_multichoice_single",
+           "question_name"        => "My multichoice single",
+           "type"                 => "multiplechoice"
+         },
+         {
            "question_description" => "Multiselect",
            "min"                  => nil,
            "default"              => "six\neight",
@@ -144,6 +156,20 @@ describe TopologicalInventory::AnsibleTower::Parser do
             :initialValue => "",
             :label        => "My multichoice single",
             :helperText   => "Single select",
+            :isRequired   => true,
+            :validate     => [{:type => "required-validator"}],
+            :options      => [
+              {:label => "one", :value => "one"},
+              {:label => "two", :value => "two"},
+              {:label => "three", :value => "three"}
+            ]
+          },
+          {
+            :component    => "select-field",
+            :name         => "my_multichoice_single",
+            :initialValue => "",
+            :label        => "My multichoice single",
+            :helperText   => "Single select - Array choices",
             :isRequired   => true,
             :validate     => [{:type => "required-validator"}],
             :options      => [
