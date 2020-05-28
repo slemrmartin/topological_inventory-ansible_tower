@@ -130,7 +130,13 @@ module TopologicalInventory::AnsibleTower
       # choices for (multi)select
       def add_choices!(survey_input, output)
         output[:options] ||= []
-        survey_input['choices'].split("\n").each do |choice|
+        # choices are string up to tower version 3.5
+        choices = case survey_input['choices']
+                  when String then survey_input['choices'].split("\n")
+                  when Array then survey_input['choices']
+                  else []
+                  end
+        choices.each do |choice|
           output[:options] << {:label => choice, :value => choice}
         end
       end
