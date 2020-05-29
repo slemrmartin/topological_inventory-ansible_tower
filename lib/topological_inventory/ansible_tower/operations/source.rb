@@ -52,7 +52,7 @@ module TopologicalInventory
         end
 
         def connection_status
-          return [STATUS_UNAVAILABLE, ERROR_MESSAGES[:endpoint]] unless endpoint
+          return [STATUS_UNAVAILABLE, ERROR_MESSAGES[:endpoint_not_found]] unless endpoint
           return [STATUS_UNAVAILABLE, ERROR_MESSAGES[:authentication_not_found]] unless authentication
 
           connection_check
