@@ -15,7 +15,7 @@ module TopologicalInventory
           :endpoint_not_found       => "Endpoint not found in Sources API",
         }.freeze
 
-        LAST_CHECKED_AT_THRESHOLD = 5 # minutes
+        LAST_CHECKED_AT_THRESHOLD = 5.minutes.freeze
 
         attr_accessor :params, :request_context, :source_id
 
@@ -58,7 +58,7 @@ module TopologicalInventory
         def checked_recently?
           return false if endpoint.nil?
 
-          checked_recently = endpoint.last_checked_at.present? && endpoint.last_checked_at >= LAST_CHECKED_AT_THRESHOLD.minutes.ago
+          checked_recently = endpoint.last_checked_at.present? && endpoint.last_checked_at >= LAST_CHECKED_AT_THRESHOLD.ago
           logger.info("Source#availability_check - Skipping, last check at #{endpoint.last_checked_at} [Source ID: #{source_id}] ") if checked_recently
 
           checked_recently
