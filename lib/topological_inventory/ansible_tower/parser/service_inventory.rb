@@ -15,7 +15,6 @@ module TopologicalInventory::AnsibleTower
               "variables"                       => inventory.variables,
               "total_inventory_sources"         => inventory.total_inventory_sources,
               "inventory_sources_with_failures" => inventory.inventory_sources_with_failures,
-              "insights_credential"             => inventory.insights_credential,
               "pending_deletion"                => inventory.pending_deletion,
             }
           )
