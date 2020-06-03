@@ -24,9 +24,9 @@ RSpec.describe(TopologicalInventory::AnsibleTower::Operations::Source) do
       }
     end
 
-    let(:list_endpoints_response) { "{\"meta\":{\"count\":1,\"limit\":100,\"offset\":0},\"links\":{\"first\":\"#{sources_api_path}/sources/#{source_id}/endpoints?offset=0\",\"last\":\"#{sources_api_path}/sources/#{source_id}/endpoints?offset=0\"},\"data\":[{\"default\":true,\"host\":\"10.0.0.1\",\"id\":\"#{endpoint_id}\",\"path\":\"/\",\"role\":\"ansible\",\"scheme\":\"https\",\"source_id\":\"#{source_id}\",\"tenant\":\"#{external_tenant}\"}]}"}
-    let(:list_endpoint_authentications_response) { "{\"meta\":{\"count\":1,\"limit\":100,\"offset\":0},\"links\":{\"first\":\"#{sources_api_path}/endpoints/#{endpoint_id}/authentications?offset=0\",\"last\":\"#{sources_api_path}/endpoints/#{endpoint_id}/authentications?offset=0\"},\"data\":[{\"authtype\":\"username_password\",\"id\":\"#{authentication_id}\",\"resource_id\":\"#{endpoint_id}\",\"resource_type\":\"Endpoint\",\"username\":\"admin\",\"tenant\":\"#{external_tenant}\"}]}" }
-    let(:list_endpoint_authentications_response_empty) { "{\"meta\":{\"count\":0,\"limit\":100,\"offset\":0},\"links\":{\"first\":\"#{sources_api_path}/endpoints/#{endpoint_id}/authentications?offset=0\",\"last\":\"#{sources_api_path}/endpoints/#{endpoint_id}/authentications?offset=0\"},\"data\":[]}" }
+    let(:list_endpoints_response) { "{\"data\":[{\"default\":true,\"host\":\"10.0.0.1\",\"id\":\"#{endpoint_id}\",\"path\":\"/\",\"role\":\"ansible\",\"scheme\":\"https\",\"source_id\":\"#{source_id}\",\"tenant\":\"#{external_tenant}\"}]}"}
+    let(:list_endpoint_authentications_response) { "{\"data\":[{\"authtype\":\"username_password\",\"id\":\"#{authentication_id}\",\"resource_id\":\"#{endpoint_id}\",\"resource_type\":\"Endpoint\",\"username\":\"admin\",\"tenant\":\"#{external_tenant}\"}]}" }
+    let(:list_endpoint_authentications_response_empty) { "{\"data\":[]}" }
     let(:internal_api_authentication_response) { "{\"authtype\":\"username_password\",\"id\":\"#{authentication_id}\",\"resource_id\":\"#{endpoint_id}\",\"resource_type\":\"Endpoint\",\"username\":\"admin\",\"tenant\":\"#{external_tenant}\",\"password\":\"xxx\"}" }
 
     subject { described_class.new(payload["params"]) }
