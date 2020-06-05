@@ -57,8 +57,13 @@ ReceptorController::Client.configure do |config|
   config.pre_shared_key    = args[:receptor_controller_psk]
 end
 
+TopologicalInventory::AnsibleTower::MessagingClient.configure do |config|
+  config.queue_host = args[:queue_host]
+  config.queue_port = args[:queue_port]
+end
+
 begin
-  operations_worker = TopologicalInventory::AnsibleTower::Operations::Worker.new(:host => args[:queue_host], :port => args[:queue_port])
+  operations_worker = TopologicalInventory::AnsibleTower::Operations::Worker.new
   operations_worker.run
 rescue => err
   puts err

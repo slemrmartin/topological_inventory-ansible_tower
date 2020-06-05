@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+lib = File.expand_path("../lib", __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+STDOUT.sync = true
+
+require "bundler/setup"
+require "topological_inventory/ansible_tower/targeted_refresh/worker"
+
+#
+# Input args
+# --ingress-api (ENV["INGRESS_API"])     - ingress api server, by default *localhost:9292*
+# --metrics-port(ENV["METRICS_PORT"])    - Prometheus metrics port, default *9394*, disabled when *0*
+#
+def parse_args
+  require 'optimist'
+  Optimist.options do
+    opt :queue_host, "Kafka messaging: hostname or IP", :type => :string, :default => ENV["QUEUE_HOST"] || "localhost"
+    opt :queue_port, "Kafka messaging: port", :type => :integer, :default => (ENV["QUEUE_PORT"] || 9092).to_i
+    opt :ingress_api, "Hostname of the ingress-api route",
+        :type => :string, :default => ENV["INGRESS_API"] || "http://localhost:9292"
+    opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
+        :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
+  end
+end
+
+def check_args(args)
+  %i[queue_host queue_port ingress_api].each do |arg|
+    Optimist.die arg, "can't be blank" if args[arg].blank?
+    Optimist.die arg, "can't be zero" if arg.to_s.index('port').present? && args[arg].zero?
+  end
+end
+
+args = parse_args
+check_args(args)
+
+ingress_api_uri = URI(args[:ingress_api])
+
+TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
+TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
+
+TopologicalInventory::AnsibleTower::MessagingClient.configure do |config|
+  config.queue_host = args[:queue_host]
+  config.queue_port = args[:queue_port]
+end
+
+begin
+  targeted_collector = TopologicalInventory::AnsibleTower::TargetedRefresh::Worker.new
+  targeted_collector.run
+rescue => err
+  puts err
+  raise
+end
