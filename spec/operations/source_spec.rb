@@ -39,9 +39,7 @@ RSpec.describe(TopologicalInventory::AnsibleTower::Operations::Source) do
 
       # PATCH
       source_patch_body = {'availability_status' => described_class::STATUS_AVAILABLE}.to_json
-      # TODO: missing 'nullable: true' in availability_status_error
-      # endpoint_patch_body = {'availability_status' => described_class::STATUS_AVAILABLE, 'availability_status_error' => nil}.to_json
-      endpoint_patch_body = {'availability_status' => described_class::STATUS_AVAILABLE}.to_json
+      endpoint_patch_body = {'availability_status' => described_class::STATUS_AVAILABLE, 'availability_status_error' => nil}.to_json
 
       stub_patch(:source, source_patch_body)
       stub_patch(:endpoint, endpoint_patch_body)
