@@ -94,7 +94,7 @@ module TopologicalInventory
           endpoint_update = SourcesApiClient::Endpoint.new
 
           endpoint_update.availability_status = status
-          endpoint_update.availability_status_error = error_message
+          endpoint_update.availability_status_error = error_message.to_s
 
           api_client.update_endpoint(endpoint.id, endpoint_update)
         rescue SourcesApiClient::ApiError => e
