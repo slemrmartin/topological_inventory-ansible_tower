@@ -5,14 +5,10 @@ require "topological_inventory/ansible_tower/connection"
 module TopologicalInventory
   module AnsibleTower
     module Operations
-      class Source < TopologicalInventory::Common::Operations::Source
+      class Source < TopologicalInventory::Providers::Common::Operations::Source
         include Logging
 
         private
-
-        def required_params
-          %w[source_id]
-        end
 
         def connection_check
           check_time
