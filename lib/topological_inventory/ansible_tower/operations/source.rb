@@ -11,14 +11,13 @@ module TopologicalInventory
         private
 
         def connection_check
-          check_time
           connection = ::TopologicalInventory::AnsibleTower::Connection.new
           connection = connection.connect(endpoint.host, authentication.username, authentication.password)
           connection.api.version
 
           [STATUS_AVAILABLE, nil]
         rescue => e
-          logger.error("Source#availability_check - Failed to connect to Source id:#{source_id} - #{e.message}")
+          logger.availability_check("Failed to connect to Source id:#{source_id} - #{e.message}", :error)
           [STATUS_UNAVAILABLE, e.message]
         end
       end
