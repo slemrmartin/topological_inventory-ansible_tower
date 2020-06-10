@@ -4,7 +4,7 @@ module TopologicalInventory
   module AnsibleTower
     class MessagingClient
       OPERATIONS_QUEUE_NAME  = "platform.topological-inventory.operations-ansible-tower".freeze
-      JOB_REFRESH_QUEUE_NAME = "platform.topological-inventory.collector-ansible-tower".freeze
+      REFRESH_QUEUE_NAME = "platform.topological-inventory.collector-ansible-tower".freeze
 
       # Kafka host name
       attr_accessor :queue_host
@@ -20,18 +20,17 @@ module TopologicalInventory
         @@default ||= new
       end
 
-      def configure
-        yield(self) if block_given?
+      def self.configure
+        if block_given?
+          yield(default)
+        else
+          default
+        end
       end
 
       # Instance of messaging client for Worker
       def worker_listener
         @worker_listener ||= ManageIQ::Messaging::Client.open(worker_listener_opts)
-      end
-
-      # Instance of messaging client for Service Order
-      def job_refresh_publisher
-        @job_refresh_publisher ||= ManageIQ::Messaging::Client.open(job_refresh_publisher_opts)
       end
 
       def targeted_refresh_listener
@@ -49,7 +48,7 @@ module TopologicalInventory
 
       def targeted_refresh_listener_queue_opts
         {
-          :service     => JOB_REFRESH_QUEUE_NAME,
+          :service     => REFRESH_QUEUE_NAME,
           :persist_ref => "topological-inventory-collector-ansible-tower"
         }
       end
@@ -72,15 +71,6 @@ module TopologicalInventory
           :host       => @queue_host,
           :port       => @queue_port,
           :protocol   => :Kafka
-        }
-      end
-
-      def job_refresh_publisher_opts
-        {
-          :encoding => 'json',
-          :host     => @queue_host,
-          :port     => @queue_port,
-          :protocol => :Kafka,
         }
       end
 

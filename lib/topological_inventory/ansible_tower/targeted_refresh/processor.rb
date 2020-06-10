@@ -1,5 +1,7 @@
 require "topological_inventory/ansible_tower/operations/processor"
 
+require "topological_inventory/ansible_tower/targeted_refresh/service_instance"
+
 module TopologicalInventory
   module AnsibleTower
     module TargetedRefresh

@@ -7,12 +7,8 @@ STDOUT.sync = true
 
 require "bundler/setup"
 require "topological_inventory/ansible_tower/targeted_refresh/worker"
+require "topological_inventory-ingress_api-client"
 
-#
-# Input args
-# --ingress-api (ENV["INGRESS_API"])     - ingress api server, by default *localhost:9292*
-# --metrics-port(ENV["METRICS_PORT"])    - Prometheus metrics port, default *9394*, disabled when *0*
-#
 def parse_args
   require 'optimist'
   Optimist.options do
@@ -22,11 +18,17 @@ def parse_args
         :type => :string, :default => ENV["INGRESS_API"] || "http://localhost:9292"
     opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
         :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
+
+    opt :sources_scheme, "Sources API scheme", :type => :string, :default => ENV["SOURCES_SCHEME"] || "http"
+    opt :sources_host, "Sources API host name", :type => :string, :default => ENV["SOURCES_HOST"]
+    opt :sources_port, "Sources API port", :type => :integer, :default => ENV["SOURCES_PORT"].to_i
   end
 end
 
 def check_args(args)
-  %i[queue_host queue_port ingress_api].each do |arg|
+  %i[queue_host queue_port
+     sources_scheme sources_host sources_port
+     ingress_api].each do |arg|
     Optimist.die arg, "can't be blank" if args[arg].blank?
     Optimist.die arg, "can't be zero" if arg.to_s.index('port').present? && args[arg].zero?
   end
@@ -43,6 +45,11 @@ TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}
 TopologicalInventory::AnsibleTower::MessagingClient.configure do |config|
   config.queue_host = args[:queue_host]
   config.queue_port = args[:queue_port]
+end
+
+SourcesApiClient.configure do |config|
+  config.scheme = args[:sources_scheme] || "http"
+  config.host   = "#{args[:sources_host]}:#{args[:sources_port]}"
 end
 
 begin

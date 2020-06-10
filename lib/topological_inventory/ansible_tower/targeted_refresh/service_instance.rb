@@ -17,33 +17,35 @@ module TopologicalInventory
 
         # Entrypoint for 'ServiceInstance.refresh' operation
         def refresh
-          self.source_id, service_instance_refs = params.values_at("source_id", "service_instances")
+          self.source_id, service_instance_refs = params.values_at("source_id", "service_instance_refs")
 
           set_connection_data!
 
           parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
 
           child_service_instance_refs = []
-          get_service_instances(service_instance_refs, connection).each do |service_instance|
+          get_service_instances(connection, :refs => service_instance_refs).each do |service_instance|
             parser.parse_service_instance(service_instance)
-            get_service_instance_nodes(service_instance, connection).each do |service_instance_node|
+            next unless service_instance[:job_type] == 'workflow_job'
+
+            get_service_instance_nodes(connection, :workflow => service_instance[:job]).each do |service_instance_node|
               parser.parse_service_instance_node(service_instance_node)
-              service_instance_ref = node.summary_fields.job&.id&.to_s
+              service_instance_ref = service_instance_node.summary_fields.job&.id&.to_s
               child_service_instance_refs << service_instance_ref if service_instance_ref
             end
 
             # Can be recursive for child workflow jobs (if needed)
-            get_service_instances(child_service_instance_refs, connection).each do |service_instance|
+            get_service_instances(connection, :refs => child_service_instance_refs).each do |service_instance|
               parser.parse_service_instance(service_instance)
             end
           end
 
-          save_inventory(parser.connection.values, inventory_name, schema_name, SecureRandom.uuid, SecureRandom.uuid, Time.now.utc)
+          save_inventory(parser.collections.values, inventory_name, schema_name, SecureRandom.uuid, SecureRandom.uuid, Time.now.utc)
         end
 
         private
 
-        attr_accessor :source_id
+        attr_accessor :identity, :params, :source_id
 
         def connection
           connection_for_entity_type(nil)

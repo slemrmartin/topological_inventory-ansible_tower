@@ -42,8 +42,6 @@ module TopologicalInventory
                         :target_source_ref => job.id.to_s,
                         :target_type       => "ServiceInstance")
 
-            invoke_targeted_refresh(source, job, task_id, service_offering)
-
             logger.info("ServiceOffering#order: Task(id: #{task_id}): Ordering ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...Task updated")
           rescue StandardError => err
             logger.error("ServiceOffering#order: Task(id: #{task_id}), ServiceOffering(id: #{service_offering&.id} source_ref: #{service_offering&.source_ref}): Ordering error: #{err.cause} #{err}\n#{err.backtrace.join("\n")}")
@@ -63,28 +61,6 @@ module TopologicalInventory
 
             raise "Missing service_offering's type: #{service_offering.inspect}" if job_type.blank?
             job_type
-          end
-
-          def invoke_targeted_refresh(source, service_instance, task_id, service_offering)
-            logger.info("ServiceOffering#order: Task(id: #{task_id}): ServiceOffering(id: #{service_offering.id}, source_ref: #{service_offering.source_ref})...Publishing to Kafka")
-            # Open a connection to the messaging service
-            client = TopologicalInventory::AnsibleTower::MessagingClient.default.job_refresh_publisher
-            client.publish_topic(
-              :service => TopologicalInventory::AnsibleTower::MessagingClient::JOB_REFRESH_QUEUE_NAME,
-              :event   => "ServiceInstance.refresh",
-              :payload => targeted_refresh_msg_payload(source, service_instance)
-            )
-          end
-
-          def targeted_refresh_msg_payload(source, service_instance)
-            {
-              :request_context => identity,
-              :params          => {
-                :source_id         => source.id.to_s,
-                :source_uid        => source.uid.to_s,
-                :service_instances => [service_instance]
-              }
-            }.to_json
           end
         end
       end
