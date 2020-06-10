@@ -3,7 +3,6 @@ require "topological_inventory-api-client"
 require "topological_inventory/ansible_tower/operations/core/topology_api_client"
 require "topological_inventory/ansible_tower/operations/service_offering"
 require "topological_inventory/ansible_tower/operations/service_plan"
-require "pry-byebug"
 
 module TopologicalInventory
   module AnsibleTower
@@ -27,8 +26,7 @@ module TopologicalInventory
 
         def process
           logger.info(status_log_msg)
-          namespace = self.class.name.deconstantize
-          impl = "#{namespace}::#{model}".safe_constantize&.new(params, identity)
+          impl = "#{Operations}::#{model}".safe_constantize&.new(params, identity)
           if impl&.respond_to?(method)
             result = impl&.send(method)
 

@@ -1,6 +1,7 @@
 require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/ansible_tower/targeted_refresh/processor"
 require "topological_inventory/ansible_tower/messaging_client"
+require "pry-byebug"
 
 module TopologicalInventory
   module AnsibleTower
@@ -34,16 +35,16 @@ module TopologicalInventory
           model, method = message.message.to_s.split(".")
           payload = JSON.parse(message.payload) if message.payload.kind_of?(String)
 
-          log_with(payload&.fetch_path('request_context', 'x-rh-insights-request-id')) do
+          # log_with(payload&.fetch_path('request_context', 'x-rh-insights-request-id')) do
             logger.info("Received message #{model}##{method}, #{payload}")
 
             TargetedRefresh::Processor.process!(message, payload)
-          end
+          # end
         rescue JSON::ParserError => e
           logger.error("#{model}##{method}: Failed to parse payload: #{payload}")
           raise
         rescue StandardError => err
-          task_id = payload&.fetch_path('params', 'task_id')
+          task_id = 'X' # payload&.fetch_path('params', 'task_id')
           logger.error("#{model}##{method}: Task(id: #{task_id}) #{err.cause}\n#{err}\n#{err.backtrace.join("\n")}")
           raise
         ensure

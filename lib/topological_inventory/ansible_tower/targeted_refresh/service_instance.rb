@@ -8,16 +8,17 @@ module TopologicalInventory
   module AnsibleTower
     module TargetedRefresh
       class ServiceInstance < TopologicalInventory::AnsibleTower::Collector
-        def initialize(params = {}, identity = nil)
-          self.params   = params
-          self.identity = identity
+        def initialize(payload = {})
+          self.params = payload['params']
+          self.source_id = payload['source_id']
+
           # TODO: add metrics exporter
-          super(params['source_uid'], nil, nil, nil, nil)
+          super(payload['source_uid'], nil, nil, nil, nil)
         end
 
         # Entrypoint for 'ServiceInstance.refresh' operation
         def refresh
-          self.source_id, service_instance_refs = params.values_at("source_id", "service_instance_refs")
+          service_instance_refs = params&.collect { |task| task['source_ref'] }
 
           set_connection_data!
 
@@ -45,7 +46,12 @@ module TopologicalInventory
 
         private
 
-        attr_accessor :identity, :params, :source_id
+        attr_accessor :params, :source_id
+
+        # Queries Sources API in the context of first task
+        def identity
+          @identity ||= params.to_a.first['request_context']
+        end
 
         def connection
           connection_for_entity_type(nil)
