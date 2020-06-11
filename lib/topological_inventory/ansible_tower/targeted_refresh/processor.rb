@@ -57,9 +57,12 @@ module TopologicalInventory
         end
 
         def status_log_msg(status = nil)
-          log_task_text = '' # "Task(id: #{params['task_id']}): " if params['task_id']
+          tasks_id = if payload
+                       payload['params'].to_a.collect { |task| task['task_id'] }.compact!
+                     end
+          log_task_text = "Task(id: #{tasks_id.to_a.join(' | ')}): "
 
-          "#{log_task_text}Processing #{model}##{method} []...#{status}"
+          "#{model}##{method} -  #{log_task_text}Processing #{model}##{method} []...#{status}"
         end
       end
     end

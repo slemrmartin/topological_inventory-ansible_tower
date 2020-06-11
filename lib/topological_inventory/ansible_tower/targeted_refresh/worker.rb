@@ -36,16 +36,19 @@ module TopologicalInventory
           payload = JSON.parse(message.payload) if message.payload.kind_of?(String)
 
           # log_with(payload&.fetch_path('request_context', 'x-rh-insights-request-id')) do
-            logger.info("Received message #{model}##{method}, #{payload}")
+          logger.info("Received message #{model}##{method}, #{message.payload}")
 
             TargetedRefresh::Processor.process!(message, payload)
           # end
         rescue JSON::ParserError => e
-          logger.error("#{model}##{method}: Failed to parse payload: #{payload}")
+          logger.error("#{model}##{method} - Failed to parse payload: #{message.payload}")
           raise
         rescue StandardError => err
-          task_id = 'X' # payload&.fetch_path('params', 'task_id')
-          logger.error("#{model}##{method}: Task(id: #{task_id}) #{err.cause}\n#{err}\n#{err.backtrace.join("\n")}")
+          tasks_id = if payload
+                       ids = payload['params'].to_a.collect { |task| task['task_id'] }
+                       ids.compact!
+                     end
+          logger.error("#{model}##{method} - Task(id: #{tasks_id.to_a.join(' | ')}) #{err.cause}\n#{err}\n#{err.backtrace.join("\n")}")
           raise
         ensure
           message.ack
