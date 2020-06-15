@@ -44,8 +44,8 @@ module TopologicalInventory
         attr_accessor :identity, :model, :method, :payload
 
         def update_tasks
-          if message.payload['params'].kind_of?(Array)
-            message.payload['params'].each do |item|
+          with_params do
+            payload['params'].each do |item|
               next if item['task_id'].blank?
 
               update_task(item['task_id'].to_s,
@@ -57,12 +57,16 @@ module TopologicalInventory
         end
 
         def status_log_msg(status = nil)
-          tasks_id = if payload
-                       payload['params'].to_a.collect { |task| task['task_id'] }.compact!
-                     end
-          log_task_text = "Task(id: #{tasks_id.to_a.join(' | ')}): "
+          log_task_text = with_params do
+            tasks_id = payload['params'].collect { |task| task['task_id'] }.compact
+            tasks_id.present? ? "Task[ id: #{tasks_id.to_a.join(' | id: ')} ]: " : ''
+          end
 
-          "#{model}##{method} -  #{log_task_text}Processing #{model}##{method} []...#{status}"
+          "Processing #{model}##{method} - #{log_task_text}#{status}"
+        end
+
+        def with_params
+          yield if payload.present? && payload['params'].kind_of?(Array)
         end
       end
     end

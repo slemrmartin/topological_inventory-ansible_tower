@@ -14,11 +14,12 @@ def parse_args
   Optimist.options do
     opt :queue_host, "Kafka messaging: hostname or IP", :type => :string, :default => ENV["QUEUE_HOST"] || "localhost"
     opt :queue_port, "Kafka messaging: port", :type => :integer, :default => (ENV["QUEUE_PORT"] || 9092).to_i
-    opt :ingress_api, "Hostname of the ingress-api route",
-        :type => :string, :default => ENV["INGRESS_API"] || "http://localhost:9292"
-    opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
-        :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
-
+    opt :ingress_api_host, "Ingress API service URL",
+        :type => :string, :default => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_HOST"] || "localhost"
+    opt :ingress_api_port, "Ingress API service URL port",
+        :type => :int, :default => (ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_PORT"] || 9292).to_i
+    # opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
+    #     :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
     opt :sources_scheme, "Sources API scheme", :type => :string, :default => ENV["SOURCES_SCHEME"] || "http"
     opt :sources_host, "Sources API host name", :type => :string, :default => ENV["SOURCES_HOST"]
     opt :sources_port, "Sources API port", :type => :integer, :default => ENV["SOURCES_PORT"].to_i
@@ -28,7 +29,7 @@ end
 def check_args(args)
   %i[queue_host queue_port
      sources_scheme sources_host sources_port
-     ingress_api].each do |arg|
+     ingress_api_host ingress_api_port].each do |arg|
     Optimist.die arg, "can't be blank" if args[arg].blank?
     Optimist.die arg, "can't be zero" if arg.to_s.index('port').present? && args[arg].zero?
   end
@@ -37,10 +38,11 @@ end
 args = parse_args
 check_args(args)
 
-ingress_api_uri = URI(args[:ingress_api])
-
-TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
-TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
+TopologicalInventoryIngressApiClient.configure do |config|
+  config.scheme = "http"
+  config.host   = "#{args[:ingress_api_host]}:#{args[:ingress_api_port]}"
+  config.logger = TopologicalInventory::AnsibleTower.logger
+end
 
 TopologicalInventory::AnsibleTower::MessagingClient.configure do |config|
   config.queue_host = args[:queue_host]
