@@ -22,6 +22,7 @@ require require_dev_path if File.exist?(require_dev_path)
 # --source      (ENV["SOURCE_UID"])      - core: Source.uid (manager for this collector)
 # --scheme      (ENV["ENDPOINT_SCHEME"]) - ansible tower scheme, https by default
 # --host        (ENV["ENDPOINT_HOST"])   - ansible tower url
+# --port        (ENV["ENDPOINT_PORT"])   - ansible tower port
 # --user        (ENV["AUTH_USERNAME"])   - credentials: username
 # --password    (ENV["AUTH_PASSWORD"])   - credentials: password
 # --ingress-api (ENV["INGRESS_API"])     - ingress api server, by default *localhost:9292*
@@ -38,6 +39,8 @@ def parse_args
         :type => :string, :default => ENV["ENDPOINT_SCHEME"] || 'https'
     opt :host, "IP address or hostname of the Ansible Tower REST API",
         :type => :string, :default => ENV["ENDPOINT_HOST"]
+    opt :port, "Port for Ansible Tower REST API",
+        :type => :integer, :default => (ENV["ENDPOINT_PORT"]&.to_i || 443)
     opt :user, "Username to AnsibleTower",
         :type => :string, :default => ENV["AUTH_USERNAME"]
     opt :password, "Password to Ansible Tower",
@@ -73,7 +76,7 @@ TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}
 begin
   metrics = TopologicalInventory::AnsibleTower::Collector::ApplicationMetrics.new(args[:metrics_port])
   if args[:config].nil?
-    collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], "#{args[:scheme]}://#{args[:host]}", args[:user], args[:password], metrics)
+    collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], "#{args[:scheme]}://#{args[:host]}:#{args[:port]}", args[:user], args[:password], metrics)
     collector.collect!
   else
     pool = TopologicalInventory::AnsibleTower::CollectorsPool.new(args[:config], metrics)
