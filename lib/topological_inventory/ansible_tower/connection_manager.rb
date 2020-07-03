@@ -1,8 +1,10 @@
 require "topological_inventory/ansible_tower/connection"
 require "receptor_controller-client"
-require "topological_inventory/ansible_tower/receptor/api_client"
+require "topological_inventory/ansible_tower/receptor/connection"
 
 module TopologicalInventory::AnsibleTower
+  # Connection manager provides connection either for public or on-premise towers
+  # depending on provided parameters
   class ConnectionManager
     include Logging
 
@@ -13,6 +15,7 @@ module TopologicalInventory::AnsibleTower
     @@sync = Mutex.new
     @@receptor_client = nil
 
+    # Receptor client needs to be singleton due to processing of kafka responses
     def self.receptor_client
       @@sync.synchronize do
         return @@receptor_client if @@receptor_client.present?
@@ -23,11 +26,10 @@ module TopologicalInventory::AnsibleTower
       @@receptor_client
     end
 
+    # Stops thread with response worker
     def self.stop_receptor_client
       @@sync.synchronize do
-        if @@receptor_client.present?
-          @@receptor_client.stop
-        end
+        @@receptor_client&.stop
       end
     end
 
@@ -35,6 +37,10 @@ module TopologicalInventory::AnsibleTower
       @connection = nil
     end
 
+    # Chooses type of client depending on provided params.
+    # If `receptor_node` and `account_number` set, Receptor API Client is returned (on-premise), AnsibleTowerClient otherwise
+    #
+    # @return [AnsibleTowerClient::Connection | TopologicalInventory::AnsibleTower::Receptor::ApiClient]
     def connect(base_url: nil, username: nil, password: nil, verify_ssl: ::OpenSSL::SSL::VERIFY_NONE,
                 receptor_node: nil, account_number: nil)
       if receptor_node && account_number
@@ -51,7 +57,7 @@ module TopologicalInventory::AnsibleTower
     private
 
     def receptor_api_client(receptor_node, account_number)
-      @connection = TopologicalInventory::AnsibleTower::Receptor::ApiClient.new(
+      @connection = TopologicalInventory::AnsibleTower::Receptor::Connection.new(
         receptor_client, receptor_node, account_number
       )
     end

@@ -1,22 +1,24 @@
 module TopologicalInventory::AnsibleTower
   module Receptor
     class ApiObject
-      attr_accessor :api, :klass, :uri
+      attr_accessor :api, :connection, :klass, :uri
 
       include Logging
 
-      delegate :receptor_client, :to => :api
+      delegate :receptor_client, :to => :connection
 
       RECEPTOR_DIRECTIVE = "receptor_catalog:execute".freeze
 
-      def initialize(api, type, receiver = nil)
+      def initialize(api, connection, type, receiver = nil)
         self.api             = api
+        self.connection      = connection
         self.klass           = api.class_from_type(type.to_s.singularize)
         self.receiver        = receiver
         self.type            = type
         self.uri             = nil
       end
 
+      # If receiver is provided, :non_blocking directive is used
       def async?
         receiver.present?
       end
@@ -60,12 +62,12 @@ module TopologicalInventory::AnsibleTower
       end
 
       def endpoint
-        if type.index(api.default_api_path) == 0
+        if type.index(connection.default_api_path) == 0
           # Special case for Job template's survey_spec
           # Faraday in Tower client uses URI + String merge feature
           type
         else
-          File.join(api.default_api_path, type)
+          File.join(connection.default_api_path, type)
         end
       end
 
@@ -93,8 +95,8 @@ module TopologicalInventory::AnsibleTower
         payload = build_payload(http_method, path, params, receptor_opts)
 
         directive_type = async? ? :non_blocking : :blocking
-        directive = receptor_client.directive(api.account_number,
-                                              api.receptor_node,
+        directive = receptor_client.directive(connection.account_number,
+                                              connection.receptor_node,
                                               :directive          => RECEPTOR_DIRECTIVE,
                                               :log_message_common => payload['url'],
                                               :payload            => payload.to_json,
@@ -111,6 +113,8 @@ module TopologicalInventory::AnsibleTower
         directive.call
       end
 
+      # Successful response callback (response type="response")
+      # Can be received multiple times
       def on_success(msg_id, response)
         if receiver.respond_to?(:on_success)
           body = parse_kafka_response(response)
@@ -121,6 +125,7 @@ module TopologicalInventory::AnsibleTower
         end
       end
 
+      # Error response callback
       def on_error(msg_id, code, response)
         if receiver.respond_to?(:on_error)
           receiver.on_error(msg_id, code, response)
@@ -129,6 +134,8 @@ module TopologicalInventory::AnsibleTower
         end
       end
 
+      # Timeout callback
+      # Invoked if response isn't received in ReceptorController::Client::Configuration.response_timeout
       def on_timeout(msg_id)
         if receiver.respond_to?(:on_timeout)
           receiver.on_timeout(msg_id)
@@ -137,6 +144,8 @@ module TopologicalInventory::AnsibleTower
         end
       end
 
+      # EOF message callback (response type="eof")
+      # Always received as the last response message
       def on_eof(msg_id)
         if receiver.respond_to?(:on_eof)
           receiver.on_eof(msg_id)
