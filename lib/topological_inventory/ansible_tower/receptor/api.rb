@@ -23,6 +23,12 @@ module TopologicalInventory::AnsibleTower
         send("#{type}_class") if respond_to?("#{type}_class")
       end
 
+      # JobTemplate v1 is for Tower version < 3 which we don't support
+      # https://bugzilla.redhat.com/show_bug.cgi?id=1369842
+      def job_template_class
+        @job_template_class ||= AnsibleTowerClient::JobTemplateV2
+      end
+
       def credentials(receiver = nil)
         Receptor::ApiObject.new(self, connection, 'credentials', receiver)
       end

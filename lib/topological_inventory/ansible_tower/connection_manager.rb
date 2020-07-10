@@ -33,8 +33,9 @@ module TopologicalInventory::AnsibleTower
       end
     end
 
-    def initialize
+    def initialize(source)
       @connection = nil
+      @source = source
     end
 
     # Chooses type of client depending on provided params.
@@ -43,10 +44,13 @@ module TopologicalInventory::AnsibleTower
     # @return [AnsibleTowerClient::Connection | TopologicalInventory::AnsibleTower::Receptor::ApiClient]
     def connect(base_url: nil, username: nil, password: nil, verify_ssl: ::OpenSSL::SSL::VERIFY_NONE,
                 receptor_node: nil, account_number: nil)
-      if receptor_node && account_number
+      if receptor_node
         receptor_api_client(receptor_node, account_number)
-      else
+      elsif base_url
         ansible_tower_api_client(base_url, username, password, :verify_ssl => verify_ssl)
+      else
+        logger.error("ConnectionManager: Invalid connection data; :source_uid => #{@source}")
+        nil
       end
     end
 

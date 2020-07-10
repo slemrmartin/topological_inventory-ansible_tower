@@ -98,7 +98,7 @@ module TopologicalInventory::AnsibleTower
         directive = receptor_client.directive(connection.account_number,
                                               connection.receptor_node,
                                               :directive          => RECEPTOR_DIRECTIVE,
-                                              :log_message_common => payload['url'],
+                                              :log_message_common => payload['href_slug'],
                                               :payload            => payload.to_json,
                                               :type               => directive_type)
 
