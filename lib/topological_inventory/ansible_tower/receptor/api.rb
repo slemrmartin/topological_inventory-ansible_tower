@@ -42,23 +42,23 @@ module TopologicalInventory::AnsibleTower
       end
 
       def workflow_job_templates(receiver = nil)
-        Receptor::Template.new(self, connection,'workflow_job_templates', receiver)
+        Receptor::Template.new(self, connection, 'workflow_job_templates', receiver)
       end
 
       def workflow_job_template_nodes(receiver = nil)
-        Receptor::ApiObject.new(self, connection,'workflow_job_template_nodes', receiver)
+        Receptor::ApiObject.new(self, connection, 'workflow_job_template_nodes', receiver)
       end
 
       def jobs(receiver = nil)
-        Receptor::ApiObject.new(self, connection,'jobs', receiver)
+        Receptor::ApiObject.new(self, connection, 'jobs', receiver)
       end
 
       def workflow_jobs(receiver = nil)
-        Receptor::ApiObject.new(self, connection,'workflow_jobs', receiver)
+        Receptor::ApiObject.new(self, connection, 'workflow_jobs', receiver)
       end
 
       def workflow_job_nodes(receiver = nil)
-        Receptor::ApiObject.new(self, connection,'workflow_job_nodes', receiver)
+        Receptor::ApiObject.new(self, connection, 'workflow_job_nodes', receiver)
       end
 
       def inventories(receiver = nil)

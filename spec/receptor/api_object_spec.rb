@@ -14,7 +14,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
 
   describe "#send_request" do
     let(:msg_id) { '123' }
-    let(:receiver) { double("Receiver", :on_success => nil, :on_error => nil, :on_timeout => nil, :on_eof => nil)}
+    let(:receiver) { double("Receiver", :on_success => nil, :on_error => nil, :on_timeout => nil, :on_eof => nil) }
     let(:directive) { double(:call => nil) }
     let(:payload) { {'href_slug' => '/api/v2/job_templates'} }
 
@@ -135,7 +135,6 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
 
         allow(subject).to receive(:send_request).and_return(response)
         expect { subject.find(42) }.to raise_exception(TopologicalInventory::AnsibleTower::Receptor::ReceptorKafkaResponseError)
-
       end
     end
   end
@@ -143,7 +142,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
   describe "#all" do
     context "async" do
       let(:msg_id) { '123' }
-      let(:receiver) { double("Receiver", :on_success => nil, :on_error => nil, :on_timeout => nil, :on_eof => nil)}
+      let(:receiver) { double("Receiver", :on_success => nil, :on_error => nil, :on_timeout => nil, :on_eof => nil) }
       let(:directive) { double(:call => nil) }
 
       before do
@@ -206,7 +205,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
       it "calls receiver callbacks" do
         subject.send(:receiver=, receiver)
 
-        expect(receiver).to(receive(:on_success).with(msg_id, {'id' => 42}))
+        expect(receiver).to(receive(:on_success).with(msg_id, 'id' => 42))
         subject.send(:on_success, msg_id, response)
 
         expect(receiver).to receive(:on_error).with(msg_id, code, response)

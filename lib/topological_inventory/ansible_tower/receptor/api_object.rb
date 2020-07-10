@@ -184,18 +184,18 @@ module TopologicalInventory::AnsibleTower
       def check_kafka_response(response)
         msg = "URI: #{uri}"
         # Error returned by receptor node
-        raise TopologicalInventory::AnsibleTower::Receptor::ReceptorNodeError.new("#{msg}, response: #{response}") if response.kind_of?(String)
+        raise TopologicalInventory::AnsibleTower::Receptor::ReceptorNodeError.new, "#{msg}, response: #{response}" if response.kind_of?(String)
         # Non-hash, non-string response means unknown error
-        raise TopologicalInventory::AnsibleTower::Receptor::ReceptorUnknownResponseError.new("#{msg}, response: #{response.inspect}") unless response.kind_of?(Hash)
+        raise TopologicalInventory::AnsibleTower::Receptor::ReceptorUnknownResponseError.new, "#{msg}, response: #{response.inspect}" unless response.kind_of?(Hash)
 
         # Non-standard hash response
-        raise TopologicalInventory::AnsibleTower::Receptor::ReceptorKafkaResponseError.new("#{msg}, response: #{response.inspect}") if response['status'].nil? || response['body'].nil?
+        raise TopologicalInventory::AnsibleTower::Receptor::ReceptorKafkaResponseError.new, "#{msg}, response: #{response.inspect}" if response['status'].nil? || response['body'].nil?
 
         status = response['status'].to_i
         if status < 200 || status >= 300
           # Bad response error
           msg = "Response from #{uri} failed: HTTP status: #{response['status']}"
-          raise TopologicalInventory::AnsibleTower::Receptor::ReceptorKafkaResponseError.new(msg)
+          raise TopologicalInventory::AnsibleTower::Receptor::ReceptorKafkaResponseError.new, msg
         end
       end
 
