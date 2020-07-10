@@ -52,3 +52,4 @@ module TopologicalInventory::AnsibleTower
     end
   end
 end
+
