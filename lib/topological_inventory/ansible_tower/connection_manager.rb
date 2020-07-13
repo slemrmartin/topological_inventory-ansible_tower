@@ -12,24 +12,24 @@ module TopologicalInventory::AnsibleTower
 
     attr_reader :connection
 
-    @@sync = Mutex.new
-    @@receptor_client = nil
+    @sync = Mutex.new
+    @receptor_client = nil
 
     # Receptor client needs to be singleton due to processing of kafka responses
     def self.receptor_client
-      @@sync.synchronize do
-        return @@receptor_client if @@receptor_client.present?
+      @sync.synchronize do
+        return @receptor_client if @receptor_client.present?
 
-        @@receptor_client = ReceptorController::Client.new(:logger => TopologicalInventory::AnsibleTower.logger)
-        @@receptor_client.start
+        @receptor_client = ReceptorController::Client.new(:logger => TopologicalInventory::AnsibleTower.logger)
+        @receptor_client.start
       end
-      @@receptor_client
+      @receptor_client
     end
 
     # Stops thread with response worker
     def self.stop_receptor_client
-      @@sync.synchronize do
-        @@receptor_client&.stop
+      @sync.synchronize do
+        @receptor_client&.stop
       end
     end
 

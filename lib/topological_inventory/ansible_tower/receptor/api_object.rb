@@ -119,7 +119,9 @@ module TopologicalInventory::AnsibleTower
         if receiver.respond_to?(:on_success)
           body = parse_kafka_response(response)
           parse_result_set(body)
-          receiver.on_success(msg_id, @collection.shift)
+          unless @collection.empty?
+            receiver.on_success(msg_id, @collection.shift)
+          end
         else
           raise NotImplementedError, "Receptor Receiver must implement 'on_success' method"
         end
