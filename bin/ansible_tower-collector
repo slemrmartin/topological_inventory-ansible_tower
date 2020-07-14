@@ -10,24 +10,6 @@ require "topological_inventory/ansible_tower/collector"
 require "topological_inventory/ansible_tower/collectors_pool"
 require "topological_inventory/ansible_tower/collector/application_metrics"
 
-#
-# You can add local requires to /lib/require.dev.rb
-#
-require_dev_path = File.join(lib, "require.dev.rb")
-require require_dev_path if File.exist?(require_dev_path)
-
-#
-# Input args
-# --config      (ENV["CONFIG"])          - Config file name (without .yml suffix) - file located in "config" dir.
-# --source      (ENV["SOURCE_UID"])      - core: Source.uid (manager for this collector)
-# --scheme      (ENV["ENDPOINT_SCHEME"]) - ansible tower scheme, https by default
-# --host        (ENV["ENDPOINT_HOST"])   - ansible tower url
-# --port        (ENV["ENDPOINT_PORT"])   - ansible tower port
-# --user        (ENV["AUTH_USERNAME"])   - credentials: username
-# --password    (ENV["AUTH_PASSWORD"])   - credentials: password
-# --ingress-api (ENV["INGRESS_API"])     - ingress api server, by default *localhost:9292*
-# --metrics-port(ENV["METRICS_PORT"])    - Prometheus metrics port, default *9394*, disabled when *0*
-#
 def parse_args
   require 'optimist'
   Optimist.options do
@@ -49,18 +31,33 @@ def parse_args
         :type => :string, :default => ENV["INGRESS_API"] || "http://localhost:9292"
     opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
         :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
+    opt :receptor_controller_scheme, "Receptor Controller scheme", :type => :string, :default => ENV["RECEPTOR_CONTROLLER_SCHEME"] || "http"
+    opt :receptor_controller_host, "Receptor Controller host", :type => :string, :default => ENV["RECEPTOR_CONTROLLER_HOST"] || "localhost"
+    opt :receptor_controller_port, "Receptor Controller port", :type => :integer, :default => (ENV["RECEPTOR_CONTROLLER_PORT"] || 9090).to_i
+    opt :receptor_controller_psk, "Pre shared key for auth with receptor controller", :type => :string, :default => ENV["RECEPTOR_CONTROLLER_PSK"]
+    opt :receptor_node, "Name of endpoint's receptor node",
+        :type => :string, :default => ENV["RECEPTOR_NODE"]
+    opt :account_number, "Account number for receptor controller's x-rh-identity header",
+        :type => :string, :default => ENV["ACCOUNT_NUMBER"]
+    opt :queue_host, "Kafka messaging: hostname or IP",
+        :type => :string, :default => ENV["QUEUE_HOST"] || "localhost"
+    opt :queue_port, "Kafka messaging: port",
+        :type => :string, :default => ENV["QUEUE_PORT"] || 9092
   end
 end
 
 # Params for single-source mode and multi-source mode are mutually exclusive
 def check_mode(opts)
-  single_source_args = %i[source host user password]
+  cloud_source_args = %i[source host user password]
+  on_premise_source_args = %i[source receptor_controller_scheme receptor_controller_host receptor_controller_port receptor_node]
   if opts[:config].nil?
-    single_source_args.each do |arg|
-      Optimist::die arg, "can't be nil" if opts[arg].nil?
+    to_check = opts[:receptor_node].present? ? on_premise_source_args : cloud_source_args
+    to_check.each do |arg|
+      Optimist.die arg, "can't be nil" if opts[arg].nil?
+      Optimist.die arg, "can't be zero" if arg.to_s.index('port').present? && opts[arg].zero?
     end
   else
-    Optimist::die :config, "not applicable in single-source mode" if single_source_args.any? { |arg| opts[arg].present? }
+    Optimist.die :config, "not applicable in single-source mode" if cloud_source_args.any? { |arg| opts[arg].present? }
   end
 end
 
@@ -73,16 +70,31 @@ ingress_api_uri = URI(args[:ingress_api])
 TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
 TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
 
-begin
-  metrics = TopologicalInventory::AnsibleTower::Collector::ApplicationMetrics.new(args[:metrics_port])
-  if args[:config].nil?
-    collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source], "#{args[:scheme]}://#{args[:host]}:#{args[:port]}", args[:user], args[:password], metrics)
-    collector.collect!
-  else
-    pool = TopologicalInventory::AnsibleTower::CollectorsPool.new(args[:config], metrics)
-    pool.run!
-  end
-ensure
-  pool&.stop!
+ReceptorController::Client.configure do |config|
+  config.controller_scheme = args[:receptor_controller_scheme]
+  config.controller_host   = "#{args[:receptor_controller_host]}:#{args[:receptor_controller_port]}"
+  config.queue_host        = args[:queue_host]
+  config.queue_port        = args[:queue_port]
+  config.pre_shared_key    = args[:receptor_controller_psk]
+end
+
+
+metrics = TopologicalInventory::AnsibleTower::Collector::ApplicationMetrics.new(args[:metrics_port])
+if args[:config].nil?
+  collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source],
+                                                                "#{args[:scheme]}://#{args[:host]}:#{args[:port]}",
+                                                                args[:user], args[:password],
+                                                                metrics)
+
+  collector.collect!
+else
+  pool = TopologicalInventory::AnsibleTower::CollectorsPool.new(args[:config], metrics)
+  pool.run!
+end
+
+Signal.trap("TERM") do
   metrics&.stop_server
+  pool&.stop!
+
+  exit
 end

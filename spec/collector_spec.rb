@@ -1,7 +1,7 @@
 RSpec.describe TopologicalInventory::AnsibleTower::Collector do
   let(:source_uid) { '7b901ca3-5414-4476-8d48-a722c1493de0' }
   let(:logger) { double('Logger').as_null_object }
-  let(:client) { double('Ingress API Client')}
+  let(:client) { double('Ingress API Client') }
 
   subject do
     described_class.new(source_uid,
