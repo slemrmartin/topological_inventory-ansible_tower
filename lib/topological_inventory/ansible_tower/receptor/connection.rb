@@ -36,12 +36,12 @@ module TopologicalInventory::AnsibleTower
         "/api/v2".freeze
       end
 
+      # This header is used only when ReceptorController::Client::Configuration.pre_shared_key is blank (x-rh-rbac-psk)
       # org_id with any number is required by receptor_client controller
-      # TODO: Replace x-rh-identity with x-rh-rbac-psk
       def identity_header(account = account_number)
         @identity ||= {
           "x-rh-identity" => Base64.strict_encode64(
-            {"identity" => {"account_number" => account, "user" => { "is_org_admin" => true }, "internal" => {"org_id" => '000001'}}}.to_json
+            {"identity" => {"account_number" => account, "user" => {"is_org_admin" => true}, "internal" => {"org_id" => '000001'}}}.to_json
           )
         }
       end
