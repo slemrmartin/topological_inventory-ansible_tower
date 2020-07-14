@@ -23,7 +23,7 @@ module TopologicalInventory::AnsibleTower
         receiver = AsyncReceiver.new(self, connection, entity_type, refresh_state_uuid, refresh_state_started_at)
 
         # opts = {:fetch_all_pages => true, :accept_encoding => 'gzip', :apply_filter => nil}
-        receptor_params = {:fetch_all_pages => true}
+        receptor_params = {:accept_encoding => 'gzip', :fetch_all_pages => true}
         query_params    = {:page_size => limits[entity_type]}
         send("get_#{entity_type}", connection, query_params,
              :on_premise => true, :receptor_receiver => receiver, :receptor_params => receptor_params)
