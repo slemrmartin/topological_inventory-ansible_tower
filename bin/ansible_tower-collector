@@ -42,7 +42,7 @@ def parse_args
     opt :queue_host, "Kafka messaging: hostname or IP",
         :type => :string, :default => ENV["QUEUE_HOST"] || "localhost"
     opt :queue_port, "Kafka messaging: port",
-        :type => :string, :default => ENV["QUEUE_PORT"] || 9092
+        :type => :integer, :default => ENV["QUEUE_PORT"]&.to_i || 9092
   end
 end
 
