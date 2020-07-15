@@ -1,4 +1,3 @@
-require 'pry-byebug'
 RSpec.describe TopologicalInventory::AnsibleTower::CollectorsPool do
   let(:source) { double("Source") }
 
@@ -42,7 +41,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::CollectorsPool do
       secret = {'username' => 'redhat', 'password' => 'secret_password'}
 
       collector = subject.new_collector(source, secret)
-      expect(collector).to be_instance_of(TopologicalInventory::AnsibleTower::Collector)
+      expect(collector).to be_instance_of(TopologicalInventory::AnsibleTower::Cloud::Collector)
     end
 
     it "creates on-premise tower's collector if receptor_node present" do

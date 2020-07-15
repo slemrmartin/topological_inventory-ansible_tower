@@ -1,6 +1,6 @@
 require "concurrent"
 require "topological_inventory/ansible_tower/logging"
-require "pry-byebug"
+
 module TopologicalInventory::AnsibleTower
   module Receptor
     class AsyncReceiver
@@ -22,7 +22,7 @@ module TopologicalInventory::AnsibleTower
 
       def on_success(msg_id, entity)
         # TODO: without tower hostname, it's not possible to construct job URL
-        parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: 'https://tower.example.com')
+        parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => 'https://tower.example.com')
         parsable_entity = transformation ? transformation.call(entity) : entity
         parser.send("parse_#{entity_type.singularize}", parsable_entity)
 

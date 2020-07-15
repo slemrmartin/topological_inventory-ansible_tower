@@ -1,4 +1,3 @@
-require "topological_inventory/ansible_tower/connection"
 require "topological_inventory/ansible_tower/receptor/exception"
 require "topological_inventory/ansible_tower/receptor/api_object"
 require "topological_inventory/ansible_tower/receptor/template"
@@ -8,7 +7,7 @@ require "topological_inventory/ansible_tower/receptor/api"
 module TopologicalInventory::AnsibleTower
   module Receptor
     # On-premise connection through Receptor
-    class Connection < TopologicalInventory::AnsibleTower::Connection
+    class Connection
       include Logging
 
       RECEPTOR_REQUEST_PATH = "job".freeze

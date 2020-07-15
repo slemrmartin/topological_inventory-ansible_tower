@@ -6,9 +6,9 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 STDOUT.sync = true
 
 require "bundler/setup"
-require "topological_inventory/ansible_tower/collector"
-require "topological_inventory/ansible_tower/collectors_pool"
+require "topological_inventory/ansible_tower/cloud/collector"
 require "topological_inventory/ansible_tower/receptor/collector"
+require "topological_inventory/ansible_tower/collectors_pool"
 require "topological_inventory/ansible_tower/collector/application_metrics"
 
 def parse_args
@@ -83,10 +83,10 @@ end
 metrics = TopologicalInventory::AnsibleTower::Collector::ApplicationMetrics.new(args[:metrics_port])
 if args[:config].nil?
   collector = if args[:receptor_node].blank?
-                TopologicalInventory::AnsibleTower::Collector.new(args[:source],
-                                                                  "#{args[:scheme]}://#{args[:host]}:#{args[:port]}",
-                                                                  args[:user], args[:password],
-                                                                  metrics)
+                TopologicalInventory::AnsibleTower::Cloud::Collector.new(args[:source],
+                                                                         "#{args[:scheme]}://#{args[:host]}:#{args[:port]}",
+                                                                         args[:user], args[:password],
+                                                                         metrics)
               else
                 TopologicalInventory::AnsibleTower::Receptor::Collector.new(args[:source],
                                                                             args[:receptor_node],

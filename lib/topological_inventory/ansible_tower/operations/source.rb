@@ -1,6 +1,6 @@
 require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/providers/common/operations/source"
-require "topological_inventory/ansible_tower/connection"
+require "topological_inventory/ansible_tower/cloud/connection"
 
 module TopologicalInventory
   module AnsibleTower
@@ -11,7 +11,7 @@ module TopologicalInventory
         private
 
         def connection_check
-          connection = ::TopologicalInventory::AnsibleTower::Connection.new
+          connection = ::TopologicalInventory::AnsibleTower::Cloud::Connection.new
           connection = connection.connect(full_hostname(endpoint), authentication.username, authentication.password)
           connection.api.version
 

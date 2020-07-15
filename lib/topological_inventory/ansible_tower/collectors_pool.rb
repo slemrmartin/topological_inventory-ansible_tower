@@ -1,5 +1,5 @@
 require "topological_inventory/providers/common/collectors_pool"
-require "topological_inventory/ansible_tower/collector"
+require "topological_inventory/ansible_tower/cloud/collector"
 require "topological_inventory/ansible_tower/receptor/collector"
 require "topological_inventory/ansible_tower/logging"
 
@@ -35,12 +35,12 @@ module TopologicalInventory::AnsibleTower
                                  :host   => source.host.to_s.strip,
                                  :port   => source.port.to_s.strip)
 
-        TopologicalInventory::AnsibleTower::Collector.new(source.source,
-                                                          url.to_s,
-                                                          secret["username"],
-                                                          secret["password"],
-                                                          metrics,
-                                                          :standalone_mode => false)
+        TopologicalInventory::AnsibleTower::Cloud::Collector.new(source.source,
+                                                                 url.to_s,
+                                                                 secret["username"],
+                                                                 secret["password"],
+                                                                 metrics,
+                                                                 :standalone_mode => false)
       else
         TopologicalInventory::AnsibleTower::Receptor::Collector.new(source.source,
                                                                     source.receptor_node.to_s.strip,

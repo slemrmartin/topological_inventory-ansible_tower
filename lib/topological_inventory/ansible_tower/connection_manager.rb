@@ -1,4 +1,4 @@
-require "topological_inventory/ansible_tower/connection"
+require "topological_inventory/ansible_tower/cloud/connection"
 require "receptor_controller-client"
 require "topological_inventory/ansible_tower/receptor/connection"
 
@@ -67,7 +67,7 @@ module TopologicalInventory::AnsibleTower
     end
 
     def ansible_tower_api_client(base_url, username, password, verify_ssl:)
-      @connection = TopologicalInventory::AnsibleTower::Connection.new
+      @connection = TopologicalInventory::AnsibleTower::Cloud::Connection.new
       @connection.connect(
         base_url, username, password,
         :verify_ssl => verify_ssl

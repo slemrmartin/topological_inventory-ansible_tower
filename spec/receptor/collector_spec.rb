@@ -6,7 +6,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::Collector do
   let(:receptor_node) { 'sample-node' }
   let(:source_uid) { '7b901ca3-5414-4476-8d48-a722c1493de0' }
 
-  subject { described_class.new(source_uid, receptor_node, account_number, metrics)}
+  subject { described_class.new(source_uid, receptor_node, account_number, metrics) }
 
   describe "#connection_for_entity_type" do
     before do
@@ -46,8 +46,8 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::Collector do
   end
 
   describe "#async_save_inventory" do
-    let(:now) { Time.now }
-    let(:parser) { double('Parser', :collections => {:k1 => :v1, :k2 => :v2})}
+    let(:now) { Time.now.utc }
+    let(:parser) { double('Parser', :collections => {:k1 => :v1, :k2 => :v2}) }
 
     it "saves data in parser" do
       allow(Time).to receive(:now).and_return(now)

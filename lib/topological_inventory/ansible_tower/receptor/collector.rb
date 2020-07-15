@@ -5,9 +5,10 @@ module TopologicalInventory::AnsibleTower
   module Receptor
     class Collector < TopologicalInventory::AnsibleTower::Collector
       def initialize(source, receptor_node, account_number, metrics, standalone_mode: true)
-        super(source, "receptor://#{receptor_node}", nil, nil, metrics, :standalone_mode => standalone_mode)
+        super(source, metrics, :standalone_mode => standalone_mode)
         self.account_number = account_number # eq Tenant.external_tenant or account_number in x-rh-identity
         self.receptor_node  = receptor_node
+        self.tower_hostname = "receptor://#{receptor_node}" # For logging
       end
 
       def connection_for_entity_type(_entity_type)

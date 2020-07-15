@@ -1,7 +1,7 @@
 RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
   let(:collector) { double('collector') }
   let(:entity_type) { 'service_credentials' }
-  let(:parser) { TopologicalInventory::AnsibleTower::Parser.new(tower_url: 'https://tower.example.com') }
+  let(:parser) { TopologicalInventory::AnsibleTower::Parser.new(:tower_url => 'https://tower.example.com') }
   let(:refresh_state_started_at) { Time.now.utc }
   let(:refresh_state_uuid) { '8bebeece-5da9-4481-bbf2-9dbbaa69c048' }
   let(:service_credential) { OpenStruct.new(:id => 1, :name => 'credential1', :description => 'desc', :credential_type_id => 1) }
@@ -25,7 +25,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
 
     context "with lambda" do
       let(:entity_type) { 'service_offerings' }
-      let(:service_offering) { OpenStruct.new(:id => 1, :name => 'Job Template', :type => 'job_template')}
+      let(:service_offering) { OpenStruct.new(:id => 1, :name => 'Job Template', :type => 'job_template') }
 
       it "makes a transformation with the data" do
         subject.transformation = lambda do |template|
