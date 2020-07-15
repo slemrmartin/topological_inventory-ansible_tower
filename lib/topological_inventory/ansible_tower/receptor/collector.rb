@@ -4,15 +4,15 @@ require "topological_inventory/ansible_tower/receptor/async_receiver"
 module TopologicalInventory::AnsibleTower
   module Receptor
     class Collector < TopologicalInventory::AnsibleTower::Collector
-      def initialize(source, receptor_node, external_tenant, metrics)
-        super(source, "receptor://#{receptor_node}", nil, nil, metrics)
-        self.receptor_node      = receptor_node
-        self.tenant             = external_tenant # eq Tenant.external_tenant or account_number in x-rh-identity
+      def initialize(source, receptor_node, account_number, metrics, standalone_mode: true)
+        super(source, "receptor://#{receptor_node}", nil, nil, metrics, :standalone_mode => standalone_mode)
+        self.account_number = account_number # eq Tenant.external_tenant or account_number in x-rh-identity
+        self.receptor_node  = receptor_node
       end
 
       def connection_for_entity_type(_entity_type)
-        connection_manager.connect(:receptor_node  => receptor_node,
-                                   :account_number => tenant)
+        connection_manager.connect(:account_number => account_number,
+                                   :receptor_node  => receptor_node)
       end
 
       def collector_thread(connection, entity_type)
@@ -44,6 +44,10 @@ module TopologicalInventory::AnsibleTower
         sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, sweep_scope, refresh_state_started_at)
         logger.sweeping(:finish, source, sweep_scope, refresh_state_uuid)
       end
+
+      private
+
+      attr_accessor :account_number, :receptor_node
     end
   end
 end

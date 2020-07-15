@@ -1,6 +1,6 @@
 require "concurrent"
 require "topological_inventory/ansible_tower/logging"
-
+require "pry-byebug"
 module TopologicalInventory::AnsibleTower
   module Receptor
     class AsyncReceiver
@@ -14,8 +14,8 @@ module TopologicalInventory::AnsibleTower
         self.connection = connection
         self.entity_type = entity_type
         self.refresh_state_uuid = refresh_state_uuid
-        self.refresh_state_started_at = Time.now.utc
-        self.sweep_scope = Set.new
+        self.refresh_state_started_at = refresh_state_started_at
+        self.sweep_scope = Concurrent::Set.new
         self.total_parts = Concurrent::AtomicFixnum.new
         self.transformation = nil
       end

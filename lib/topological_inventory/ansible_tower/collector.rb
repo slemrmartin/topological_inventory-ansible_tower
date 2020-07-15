@@ -37,7 +37,7 @@ module TopologicalInventory::AnsibleTower
     private
 
     attr_accessor :connection_manager, :tower_hostname, :tower_user, :tower_passwd,
-                  :metrics, :receptor_node, :tenant
+                  :metrics
 
     def endpoint_types
       %w[service_catalog]
