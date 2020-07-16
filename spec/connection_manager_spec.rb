@@ -12,7 +12,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::ConnectionManager do
 
   it "sets AnsibleTower connection if base_url provided" do
     subject.connect(:base_url => 'www.example.com', :username => 'User1', :password => 'redhat')
-    expect(subject.connection).to be_kind_of(TopologicalInventory::AnsibleTower::Connection)
+    expect(subject.connection).to be_kind_of(TopologicalInventory::AnsibleTower::Cloud::Connection)
   end
 
   it "logs error and return nil if neither receptor node or base url provided" do

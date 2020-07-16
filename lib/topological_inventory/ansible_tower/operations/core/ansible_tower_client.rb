@@ -1,5 +1,5 @@
 require "topological_inventory/ansible_tower/logging"
-require "topological_inventory/ansible_tower/connection"
+require "topological_inventory/ansible_tower/cloud/connection"
 require "topological_inventory/ansible_tower/operations/core/sources_api_client"
 require "topological_inventory/ansible_tower/operations/core/topology_api_client"
 
@@ -18,7 +18,7 @@ module TopologicalInventory
             self.source_id  = source_id
             self.task_id    = task_id
 
-            self.connection_manager = TopologicalInventory::AnsibleTower::Connection.new
+            self.connection_manager = TopologicalInventory::AnsibleTower::Cloud::Connection.new
           end
 
           # Format of order params (Input for Catalog - created by Collector, Output is produced by catalog - input of this worker)

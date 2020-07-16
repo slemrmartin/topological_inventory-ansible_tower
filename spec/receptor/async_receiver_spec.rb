@@ -1,0 +1,53 @@
+RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
+  let(:collector) { double('collector') }
+  let(:entity_type) { 'service_credentials' }
+  let(:parser) { TopologicalInventory::AnsibleTower::Parser.new(:tower_url => 'https://tower.example.com') }
+  let(:refresh_state_started_at) { Time.now.utc }
+  let(:refresh_state_uuid) { '8bebeece-5da9-4481-bbf2-9dbbaa69c048' }
+  let(:service_credential) { OpenStruct.new(:id => 1, :name => 'credential1', :description => 'desc', :credential_type_id => 1) }
+
+  subject { TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver.new(collector, nil, entity_type, refresh_state_uuid, refresh_state_started_at) }
+
+  before do
+    allow(TopologicalInventory::AnsibleTower::Parser).to receive(:new).and_return(parser)
+  end
+
+  describe "#on_success" do
+    it "parses received data and sends them to the collector" do
+      expect(parser).to receive(:parse_service_credential).with(service_credential).and_call_original
+      expect(collector).to receive(:async_save_inventory).with(refresh_state_uuid, parser)
+
+      subject.on_success(nil, service_credential)
+
+      expect(subject.total_parts.value).to eq(1)
+      expect(subject.sweep_scope.to_a).to eq([entity_type.to_sym])
+    end
+
+    context "with lambda" do
+      let(:entity_type) { 'service_offerings' }
+      let(:service_offering) { OpenStruct.new(:id => 1, :name => 'Job Template', :type => 'job_template') }
+
+      it "makes a transformation with the data" do
+        subject.transformation = lambda do |template|
+          {
+            :template      => template,
+            :template_type => template.type.to_sym,
+            :survey_spec   => nil
+          }
+        end
+        expect(parser).to(receive(:parse_service_offering)
+                            .with(:template      => service_offering,
+                                  :template_type => :job_template,
+                                  :survey_spec   => nil)
+                            .and_call_original)
+
+        expect(collector).to receive(:async_save_inventory)
+
+        subject.on_success(nil, service_offering)
+
+        expect(subject.total_parts.value).to eq(1)
+        expect(subject.sweep_scope.to_a).to eq([entity_type.to_sym])
+      end
+    end
+  end
+end

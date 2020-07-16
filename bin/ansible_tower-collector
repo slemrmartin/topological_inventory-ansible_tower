@@ -6,7 +6,8 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 STDOUT.sync = true
 
 require "bundler/setup"
-require "topological_inventory/ansible_tower/collector"
+require "topological_inventory/ansible_tower/cloud/collector"
+require "topological_inventory/ansible_tower/receptor/collector"
 require "topological_inventory/ansible_tower/collectors_pool"
 require "topological_inventory/ansible_tower/collector/application_metrics"
 
@@ -81,10 +82,17 @@ end
 
 metrics = TopologicalInventory::AnsibleTower::Collector::ApplicationMetrics.new(args[:metrics_port])
 if args[:config].nil?
-  collector = TopologicalInventory::AnsibleTower::Collector.new(args[:source],
-                                                                "#{args[:scheme]}://#{args[:host]}:#{args[:port]}",
-                                                                args[:user], args[:password],
-                                                                metrics)
+  collector = if args[:receptor_node].blank?
+                TopologicalInventory::AnsibleTower::Cloud::Collector.new(args[:source],
+                                                                         "#{args[:scheme]}://#{args[:host]}:#{args[:port]}",
+                                                                         args[:user], args[:password],
+                                                                         metrics)
+              else
+                TopologicalInventory::AnsibleTower::Receptor::Collector.new(args[:source],
+                                                                            args[:receptor_node],
+                                                                            args[:account_number],
+                                                                            metrics)
+              end
 
   collector.collect!
 else
@@ -95,6 +103,8 @@ end
 Signal.trap("TERM") do
   metrics&.stop_server
   pool&.stop!
-
+  if args[:receptor_node].present?
+    TopologicalInventory::AnsibleTower::ConnectionManager.stop_receptor_client
+  end
   exit
 end
