@@ -6,10 +6,15 @@ module TopologicalInventory::AnsibleTower
     class AsyncReceiver
       include Logging
 
-      attr_accessor :collector, :transformation
+      # Number of expected 'on_eof' calls
+      attr_accessor :async_requests_remaining
+      attr_accessor :collector
+      # Lambda block for transformation from collected data to parsable data
+      attr_accessor :transformation
       attr_reader :connection, :entity_type, :refresh_state_uuid, :refresh_state_started_at, :sweep_scope, :total_parts
 
       def initialize(collector, connection, entity_type, refresh_state_uuid, refresh_state_started_at)
+        self.async_requests_remaining = Concurrent::AtomicFixnum.new
         self.collector = collector
         self.connection = connection
         self.entity_type = entity_type
@@ -45,10 +50,16 @@ module TopologicalInventory::AnsibleTower
         logger.error("[ERROR] Timeout when collecting #{entity_type}, :source_uid => #{collector.send(:source)}, :refresh_state_uuid => #{refresh_state_uuid}; MSG ID: #{msg_id}, ")
       end
 
+      # There can be multiple 'on_eof' calls
+      # i.e. service_offerings entity type consists of 2 tower entity types (job templates/workflow templates)
       def on_eof(_msg_id)
-        collector.async_collecting_finished(entity_type, refresh_state_uuid, total_parts.value)
+        async_requests_remaining.decrement
 
-        collector.async_sweep_inventory(refresh_state_uuid, sweep_scope.to_a, total_parts.value, refresh_state_started_at)
+        if async_requests_remaining.value == 0
+          collector.async_collecting_finished(entity_type, refresh_state_uuid, total_parts.value)
+
+          collector.async_sweep_inventory(refresh_state_uuid, sweep_scope.to_a, total_parts.value, refresh_state_started_at)
+        end
       end
 
       private

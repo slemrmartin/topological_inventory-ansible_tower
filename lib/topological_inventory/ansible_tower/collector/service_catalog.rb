@@ -113,6 +113,7 @@ module TopologicalInventory::AnsibleTower
         # Invoking requests
         # Public Tower requests wrapped in iterator (support for .each)
         if on_premise
+          receptor_receiver.async_requests_remaining.value = tower_types.size if receptor_receiver.respond_to?(:async_requests_remaining)
           api_calls_block.call
         else
           TopologicalInventory::AnsibleTower::Iterator.new(api_calls_block, "Couldn't fetch '#{tower_types.join(', ')}' of service catalog.")
