@@ -1,10 +1,10 @@
-require "topological_inventory/ansible_tower/collector"
+require "topological_inventory/ansible_tower/cloud/collector"
 require "topological_inventory/providers/common/operations/sources_api_client"
 
 module TopologicalInventory
   module AnsibleTower
     module TargetedRefresh
-      class ServiceInstance < TopologicalInventory::AnsibleTower::Collector
+      class ServiceInstance < TopologicalInventory::AnsibleTower::Cloud::Collector
         REFS_PER_REQUEST_LIMIT = 20.freeze
 
         def initialize(payload = {})
@@ -69,7 +69,11 @@ module TopologicalInventory
           parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
 
           # API request, nodes and jobs under workflow job not needed
-          get_service_instances(connection, :refs => tasks.values).each do |service_instance|
+          query_params = {
+            :id__in    => tasks.values.join(','),
+            :page_size => limits['service_instances']
+          }
+          get_service_instances(connection, query_params).each do |service_instance|
             parser.parse_service_instance(service_instance)
           end
 
@@ -79,6 +83,7 @@ module TopologicalInventory
           logger.info("ServiceInstance#refresh - Task[ id: #{tasks_id} ] Sending to Ingress API...Complete")
         end
 
+        # TODO: add support for on-premise connection
         def connection
           connection_for_entity_type(nil)
         end

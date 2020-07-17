@@ -56,7 +56,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::TargetedRefresh::Processor do
       it "logs warning with all the Task ids" do
         allow(subject).to receive(:update_tasks)
 
-        msg = "Processing SomeModel#some_method - Task(id: 1 | id: 2): Not Implemented!"
+        msg = "Processing SomeModel#some_method - Task[ id: 1 | id: 2 ]: Not Implemented!"
         expect(subject.logger).to receive(:warn).with(msg)
 
         subject.process
