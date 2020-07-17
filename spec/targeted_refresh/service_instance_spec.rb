@@ -76,9 +76,9 @@ RSpec.describe TopologicalInventory::AnsibleTower::TargetedRefresh::ServiceInsta
           stub_const("#{described_class}::REFS_PER_REQUEST_LIMIT", 10)
 
           expect(subject).to receive(:refresh_part).and_call_original.once
-          expect(subject).to receive(:get_service_instances)
+          expect(subject).to(receive(:get_service_instances)
                                .with(subject.send(:connection), :id__in => job_refs.join(','), :page_size => subject.send(:limits)['service_instances'])
-                               .and_return(service_instances).once
+                               .and_return(service_instances).once)
 
           expect(subject).to receive(:save_inventory).once
 
@@ -92,9 +92,9 @@ RSpec.describe TopologicalInventory::AnsibleTower::TargetedRefresh::ServiceInsta
 
           expect(subject).to receive(:refresh_part).and_call_original.twice
           2.times do |i|
-            expect(subject).to receive(:get_service_instances)
+            expect(subject).to(receive(:get_service_instances)
                                  .with(subject.send(:connection), :id__in => job_refs[i], :page_size => subject.send(:limits)['service_instances'])
-                                 .and_return([service_instances[i]])
+                                 .and_return([service_instances[i]]))
           end
 
           expect(subject).to receive(:save_inventory).twice

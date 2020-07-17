@@ -24,8 +24,8 @@ RSpec.describe TopologicalInventory::AnsibleTower::TargetedRefresh::Processor do
                :payload => {
                  :source_id  => '1',
                  :source_uid => '3bfb8667-2b00-480b-bcbf-452bfb34a440',
-                 :params     => [{:task_id => '1', :source_ref => job_refs[0], :request_context => {"x-rh-identity": "xxx", "x-rh-insights-request-id": "111"}},
-                                 {:task_id => '2', :source_ref => job_refs[1], :request_context => {"x-rh-identity": "yyy", "x-rh-insights-request-id": "222"}}]
+                 :params     => [{:task_id => '1', :source_ref => job_refs[0], :request_context => {"x-rh-identity" => "xxx", "x-rh-insights-request-id" => "111"}},
+                                 {:task_id => '2', :source_ref => job_refs[1], :request_context => {"x-rh-identity" => "yyy", "x-rh-insights-request-id" => "222"}}]
                })
       end
 

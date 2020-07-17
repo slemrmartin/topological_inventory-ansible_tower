@@ -5,7 +5,7 @@ module TopologicalInventory
   module AnsibleTower
     module TargetedRefresh
       class ServiceInstance < TopologicalInventory::AnsibleTower::Cloud::Collector
-        REFS_PER_REQUEST_LIMIT = 20.freeze
+        REFS_PER_REQUEST_LIMIT = 20
 
         def initialize(payload = {})
           self.params    = payload['params']
@@ -38,8 +38,8 @@ module TopologicalInventory
             end
           end
 
-          refresh_part(tasks, refresh_state_uuid, SecureRandom.uuid) if tasks.length > 0
-        rescue StandardError => err
+          refresh_part(tasks, refresh_state_uuid, SecureRandom.uuid) unless tasks.empty?
+        rescue => err
           logger.error("ServiceInstance#refresh - Error: #{err.message}\n#{err.backtrace.join("\n")}")
         end
 
@@ -66,7 +66,7 @@ module TopologicalInventory
         def refresh_part(tasks, refresh_state_uuid, refresh_state_part_uuid)
           tasks_id = tasks.keys.join(' | id: ')
 
-          parser = TopologicalInventory::AnsibleTower::Parser.new(tower_url: tower_hostname)
+          parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => tower_hostname)
 
           # API request, nodes and jobs under workflow job not needed
           query_params = {
@@ -92,7 +92,7 @@ module TopologicalInventory
           raise TopologicalInventory::Providers::Common::Operations::Source::ERROR_MESSAGES[:endpoint_not_found] unless endpoint
           raise TopologicalInventory::Providers::Common::Operations::Source::ERROR_MESSAGES[:authentication_not_found] unless authentication
 
-          self.tower_hostname = endpoint.host # TODO taken from operations/source, but it's more complex in collectors_pool.rb
+          self.tower_hostname = endpoint.host # TODO: taken from operations/source, but it's more complex in collectors_pool.rb
           self.tower_user = authentication.username
           self.tower_passwd = authentication.password
         end

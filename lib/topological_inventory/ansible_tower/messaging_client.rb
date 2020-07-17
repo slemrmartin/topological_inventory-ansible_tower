@@ -3,7 +3,7 @@ require "manageiq-messaging"
 module TopologicalInventory
   module AnsibleTower
     class MessagingClient
-      OPERATIONS_QUEUE_NAME  = "platform.topological-inventory.operations-ansible-tower".freeze
+      OPERATIONS_QUEUE_NAME = "platform.topological-inventory.operations-ansible-tower".freeze
       REFRESH_QUEUE_NAME = "platform.topological-inventory.collector-ansible-tower".freeze
 
       # Kafka host name

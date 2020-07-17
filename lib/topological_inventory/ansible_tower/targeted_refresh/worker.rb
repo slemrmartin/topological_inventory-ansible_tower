@@ -39,10 +39,10 @@ module TopologicalInventory
             logger.info("Received message #{model}##{method}, #{payload}")
             TargetedRefresh::Processor.process!(message, payload)
           end
-        rescue JSON::ParserError => e
+        rescue JSON::ParserError
           logger.error("#{model}##{method} - Failed to parse payload: #{message.payload}")
           raise
-        rescue StandardError => err
+        rescue => err
           tasks_id = if payload
                        ids = payload['params'].to_a.collect { |task| task['task_id'] }
                        ids.compact!
