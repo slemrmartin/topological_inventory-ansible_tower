@@ -18,6 +18,11 @@ def parse_args
     opt :topological_scheme, "Topological Inventory API scheme", :type => :string, :default => ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_SCHEME"] || "http"
     opt :topological_host, "Topological Inventory API host name", :type => :string, :default => ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_HOST"]
     opt :topological_port, "Topological Inventory API port", :type => :integer, :default => ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_PORT"].to_i
+
+    opt :receptor_controller_scheme, "Receptor Controller scheme", :type => :string, :default => ENV["RECEPTOR_CONTROLLER_SCHEME"] || "http"
+    opt :receptor_controller_host, "Receptor Controller host", :type => :string, :default => ENV["RECEPTOR_CONTROLLER_HOST"] || "localhost"
+    opt :receptor_controller_port, "Receptor Controller port", :type => :integer, :default => (ENV["RECEPTOR_CONTROLLER_PORT"] || 9090).to_i
+    opt :receptor_controller_psk, "Pre shared key for auth with receptor controller", :type => :string, :default => ENV["RECEPTOR_CONTROLLER_PSK"]
   end
 end
 
@@ -42,6 +47,14 @@ end
 SourcesApiClient.configure do |config|
   config.scheme = args[:sources_scheme] || "http"
   config.host   = "#{args[:sources_host]}:#{args[:sources_port]}"
+end
+
+ReceptorController::Client.configure do |config|
+  config.controller_scheme = args[:receptor_controller_scheme]
+  config.controller_host   = "#{args[:receptor_controller_host]}:#{args[:receptor_controller_port]}"
+  config.queue_host        = args[:queue_host]
+  config.queue_port        = args[:queue_port]
+  config.pre_shared_key    = args[:receptor_controller_psk]
 end
 
 begin
