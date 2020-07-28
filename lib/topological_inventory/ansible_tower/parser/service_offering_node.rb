@@ -3,27 +3,40 @@ module TopologicalInventory::AnsibleTower
     module ServiceOfferingNode
       def parse_service_offering_node(offering_node)
         node = offering_node[:node]
-        service_offering_ref = node.summary_fields.unified_job_template&.id&.to_s
-        service_offering = lazy_find(:service_offerings, :source_ref => service_offering_ref) if service_offering_ref
+        unified_job_type = node.summary_fields.unified_job_template&.unified_job_type.to_s
+        unified_job_template_ref = node.summary_fields.unified_job_template&.id&.to_s
+        if unified_job_template_ref
+          case unified_job_type
+          when 'project_update'
+            service_project = lazy_find(:service_projects, :source_ref => unified_job_template_ref)
+          when 'inventory_update'
+            service_inventory_source = lazy_find(:service_inventory_sources, :source_ref => unified_job_template_ref)
+          else
+            service_offering = lazy_find(:service_offerings, :source_ref => unified_job_template_ref)
+          end
+        end
 
         service_inventory = lazy_find(:service_inventories, :source_ref => node.inventory_id.to_s) if node.respond_to?(:inventory_id)
 
         collections.service_offering_nodes.build(
           parse_base_item(node).merge(
-            :source_ref            => node.id.to_s,
-            :source_updated_at     => node.modified,
-            :name                  => node.summary_fields.unified_job_template&.name,
-            :service_inventory     => service_inventory,
-            :root_service_offering => lazy_find(:service_offerings, :source_ref => node.summary_fields.workflow_job_template.id.to_s),
-            :service_offering      => service_offering,
-            :extra                 => {
-              "job_type"      => node.job_type,
-              "success_nodes" => node.success_nodes_id,
-              "failure_nodes" => node.failure_nodes_id,
-              "always_nodes"  => node.always_nodes_id,
-              "limit"         => node.limit,
-              "job_tags"      => node.job_tags,
-              "skip_tags"     => node.skip_tags,
+            :source_ref               => node.id.to_s,
+            :source_updated_at        => node.modified,
+            :name                     => node.summary_fields.unified_job_template&.name,
+            :service_inventory_source => service_inventory_source,
+            :service_project          => service_project,
+            :service_inventory        => service_inventory,
+            :service_offering         => service_offering,
+            :root_service_offering    => lazy_find(:service_offerings, :source_ref => node.summary_fields.workflow_job_template.id.to_s),
+            :extra                    => {
+              "job_type"         => node.job_type,
+              "success_nodes"    => node.success_nodes_id,
+              "failure_nodes"    => node.failure_nodes_id,
+              "always_nodes"     => node.always_nodes_id,
+              "limit"            => node.limit,
+              "job_tags"         => node.job_tags,
+              "skip_tags"        => node.skip_tags,
+              "unified_job_type" => unified_job_type
             }
           )
         )
