@@ -44,7 +44,7 @@ module TopologicalInventory::AnsibleTower
     # @return [AnsibleTowerClient::Connection | TopologicalInventory::AnsibleTower::Receptor::ApiClient]
     def connect(base_url: nil, username: nil, password: nil, verify_ssl: ::OpenSSL::SSL::VERIFY_NONE,
                 receptor_node: nil, account_number: nil)
-      if receptor_node
+      if receptor_node.present?
         receptor_api_client(receptor_node, account_number)
       elsif base_url
         ansible_tower_api_client(base_url, username, password, :verify_ssl => verify_ssl)

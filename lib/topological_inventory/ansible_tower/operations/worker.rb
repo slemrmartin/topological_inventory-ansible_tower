@@ -2,6 +2,7 @@ require "manageiq-messaging"
 require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/ansible_tower/operations/processor"
 require "topological_inventory/ansible_tower/operations/source"
+require "topological_inventory/ansible_tower/connection_manager"
 
 module TopologicalInventory
   module AnsibleTower
@@ -29,6 +30,7 @@ module TopologicalInventory
           logger.error("#{err.cause}\n#{err.backtrace.join("\n")}")
         ensure
           client&.close
+          TopologicalInventory::AnsibleTower::ConnectionManager.stop_receptor_client
         end
 
         private
