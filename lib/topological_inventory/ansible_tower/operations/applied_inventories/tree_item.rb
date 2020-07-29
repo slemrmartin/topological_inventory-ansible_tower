@@ -24,7 +24,6 @@ module TopologicalInventory
             parent.add_child(child)
           end
 
-
           def initialize(item)
             self.item     = item
             self.parent   = nil
