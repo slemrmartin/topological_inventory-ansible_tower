@@ -16,11 +16,6 @@ module TopologicalInventory::AnsibleTower
         get_tower_objects(connection, query_params, tower_types, :on_premise => on_premise, :receptor_receiver => receptor_receiver, :receptor_params => receptor_params)
       end
 
-      def get_service_inventory_sources(connection, query_params, on_premise: false, receptor_receiver: nil, receptor_params: {})
-        tower_types = %i[inventory_sources]
-        get_tower_objects(connection, query_params, tower_types, :on_premise => on_premise, :receptor_receiver => receptor_receiver, :receptor_params => receptor_params)
-      end
-
       def get_service_offerings(connection, query_params, on_premise: false, receptor_receiver: nil, receptor_params: {})
         tower_types = %i[job_templates workflow_job_templates]
         get_tower_objects(connection, query_params, tower_types, :on_premise => on_premise, :receptor_receiver => receptor_receiver, :receptor_params => receptor_params) do
@@ -50,11 +45,6 @@ module TopologicalInventory::AnsibleTower
             }
           end
         end
-      end
-
-      def get_service_projects(connection, query_params, on_premise: false, receptor_receiver: nil, receptor_params: {})
-        tower_types = %i[projects]
-        get_tower_objects(connection, query_params, tower_types, :on_premise => on_premise, :receptor_receiver => receptor_receiver, :receptor_params => receptor_params)
       end
 
       def get_service_instances(connection, query_params, on_premise: false, receptor_receiver: nil, receptor_params: {})
