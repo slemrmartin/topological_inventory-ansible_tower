@@ -1,5 +1,5 @@
 require "topological_inventory/ansible_tower/logging"
-require "topological_inventory/ansible_tower/cloud/connection"
+require "topological_inventory/ansible_tower/connection_manager"
 require "topological_inventory/ansible_tower/operations/core/sources_api_client"
 require "topological_inventory/ansible_tower/operations/core/topology_api_client"
 
@@ -18,7 +18,7 @@ module TopologicalInventory
             self.source_id  = source_id
             self.task_id    = task_id
 
-            self.connection_manager = TopologicalInventory::AnsibleTower::Cloud::Connection.new
+            self.connection_manager = TopologicalInventory::AnsibleTower::ConnectionManager.new(source_id)
           end
 
           # Format of order params (Input for Catalog - created by Collector, Output is produced by catalog - input of this worker)
@@ -120,10 +120,31 @@ module TopologicalInventory
             default_endpoint.verify_ssl ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
           end
 
+          # TODO: Join with availability_check methods
           def ansible_tower
             @ansible_tower ||= connection_manager.connect(
-              default_endpoint.host, authentication.username, authentication.password, :verify_ssl => verify_ssl_mode
+              :base_url       => full_hostname(default_endpoint),
+              :username       => authentication.try(:username),
+              :password       => authentication.try(:password),
+              :verify_ssl     => verify_ssl_mode,
+              :receptor_node  => default_endpoint.receptor_node.to_s.strip,
+              :account_number => account_number
             )
+          end
+
+          def account_number
+            return @account_number if @account_number
+            return if identity.try(:[], 'x-rh-identity').nil?
+
+            identity_hash = JSON.parse(Base64.decode64(identity['x-rh-identity']))
+            @account_number = identity_hash.dig('identity', 'account_number')
+          rescue JSON::ParserError => e
+            logger.error("ServiceOffering#order: Task(id: #{task_id}): Failed to parse identity header: #{e.message}")
+            nil
+          end
+
+          def full_hostname(endpoint)
+            endpoint.host.tap { |host| host << ":#{endpoint.port}" if endpoint.port }
           end
         end
       end
