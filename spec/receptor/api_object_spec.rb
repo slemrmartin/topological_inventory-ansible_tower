@@ -85,6 +85,32 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
         expect(response.body).to eq(body)
       end
     end
+
+    context "async" do
+      # Not implemented yet
+    end
+  end
+
+  describe "#post" do
+    let(:post_data) { {:service_parameters => {"username" => "user1", "quest" => "Test Topology", "airspeed" => 50}, :provider_control_parameters => {}} }
+
+    context "sync" do
+      it "sends request to the default path and type" do
+        body = {:key => :value}
+        expect(subject).to(receive(:send_request)
+                             .with(:post, '/api/v2/job_templates', :data => post_data)
+                             .and_return('status' => 200, 'body' => body))
+
+        response = subject.post(post_data)
+
+        expect(response).to be_kind_of(TopologicalInventory::AnsibleTower::Receptor::Response)
+        expect(response.body).to eq(body)
+      end
+    end
+
+    context "async" do
+      # Not implemented yet
+    end
   end
 
   describe "#find" do
