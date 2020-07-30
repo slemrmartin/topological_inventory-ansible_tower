@@ -4,9 +4,10 @@ module AppliedInventories
     # Hash of samples <Name, Workflow>, each key-pair is one test case
     # Results are in :applied_inventories array
     def templates_and_workflows_data
-      job_templates.merge(simple_workflows).merge(nested_workflows)
+      job_templates.merge(simple_workflows).merge(special_workflows).merge(nested_workflows)
     end
 
+    # :applied_inventories contains the expected result of operation
     # :applied_inventories results are shown for each leaf (job template) in order defined by `workflow_child_nodes`
     def nested_workflows
       {
@@ -125,6 +126,61 @@ module AppliedInventories
           :template            => workflow('1006', nil, true),
           :inventory           => nil,
           :child_nodes         => workflow_child_nodes('1006')
+        }
+      }
+    end
+
+    def special_workflows
+      {
+        'Workflow 7 with inventory_update'                 => {
+          :applied_inventories => [],
+          :prompted_inventory  => nil,
+          :template            => workflow('1007'),
+          :inventory           => nil,
+          :child_nodes         => [
+            {
+              :node      => node('101', 'inventory_update', '1007', nil),
+              :inventory => nil,
+              :template  => {}
+            },
+            {
+              :node      => node('102', 'project_update', '1007', nil),
+              :inventory => nil,
+              :template  => {}
+            }
+          ]
+        },
+        'Workflow 8 with nodes with the same Job Template' => {
+          :applied_inventories => [inventory('1')],
+          :prompted_inventory  => nil,
+          :template            => workflow('1008'),
+          :inventory           => nil,
+          :child_nodes         => [
+            {
+              :node      => node('101', 'job', '1008', job_template('1').id),
+              :inventory => nil,
+              :template  => {
+                :template  => job_template('1', inventory('1').id),
+                :inventory => inventory('1')
+              }
+            },
+            {
+              :node      => node('102', 'job', '1008', job_template('1').id),
+              :inventory => nil,
+              :template  => {
+                :template  => job_template('1', inventory('1').id),
+                :inventory => inventory('1')
+              }
+            },
+            {
+              :node      => node('103', 'job', '1008', job_template('1').id),
+              :inventory => nil,
+              :template  => {
+                :template  => job_template('1', inventory('1').id),
+                :inventory => inventory('1')
+              }
+            }
+          ]
         }
       }
     end
