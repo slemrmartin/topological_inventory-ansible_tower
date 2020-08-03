@@ -1,10 +1,11 @@
-require "topological_inventory/ansible_tower/cloud/collector"
+require "topological_inventory/ansible_tower/collector"
 require "topological_inventory/providers/common/operations/sources_api_client"
+require "topological_inventory/ansible_tower/receptor/async_receiver"
 
 module TopologicalInventory
   module AnsibleTower
     module TargetedRefresh
-      class ServiceInstance < TopologicalInventory::AnsibleTower::Cloud::Collector
+      class ServiceInstance < TopologicalInventory::AnsibleTower::Collector
         REFS_PER_REQUEST_LIMIT = 20
 
         def initialize(payload = {})
@@ -12,7 +13,7 @@ module TopologicalInventory
           self.source_id = payload['source_id']
 
           # TODO: add metrics exporter
-          super(payload['source_uid'], nil, nil, nil, nil)
+          super(payload['source_uid'], nil)
         end
 
         # Entrypoint for 'ServiceInstance.refresh' operation
@@ -66,13 +67,51 @@ module TopologicalInventory
         def refresh_part(tasks, refresh_state_uuid, refresh_state_part_uuid)
           tasks_id = tasks.keys.join(' | id: ')
 
-          parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => tower_hostname)
-
           # API request, nodes and jobs under workflow job not needed
           query_params = {
             :id__in    => tasks.values.join(','),
             :page_size => limits['service_instances']
           }
+
+          if on_premise?
+            refresh_part_on_premise(tasks_id, refresh_state_uuid, query_params)
+          else
+            refresh_part_cloud(tasks_id, refresh_state_uuid, refresh_state_part_uuid, query_params)
+          end
+        end
+
+        def refresh_part_on_premise(_tasks_id, refresh_state_uuid, query_params)
+          refresh_state_started_at = Time.now.utc
+          receptor_params = {:accept_encoding => 'gzip', :fetch_all_pages => true}
+
+          receiver = TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver.new(self, connection,
+                                                                                     'service_instances',
+                                                                                     refresh_state_uuid,
+                                                                                     refresh_state_started_at,
+                                                                                     :sweeping_enabled => false)
+          get_service_instances(connection, query_params,
+                                :on_premise        => true,
+                                :receptor_receiver => receiver,
+                                :receptor_params   => receptor_params)
+        end
+
+        public
+
+        def async_save_inventory(refresh_state_uuid, parser)
+          refresh_state_part_collected_at = Time.now.utc
+          refresh_state_part_uuid = SecureRandom.uuid
+          save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
+        end
+
+        def async_collecting_finished(entity_type, refresh_state_uuid, total_parts)
+          logger.info("ServiceInstance#refresh: finished collecting of #{entity_type} (#{refresh_state_uuid}). Total parts: #{total_parts}")
+        end
+
+        private
+
+        def refresh_part_cloud(tasks_id, refresh_state_uuid, refresh_state_part_uuid, query_params)
+          parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => tower_hostname)
+
           get_service_instances(connection, query_params).each do |service_instance|
             parser.parse_service_instance(service_instance)
           end
@@ -83,22 +122,37 @@ module TopologicalInventory
           logger.info("ServiceInstance#refresh - Task[ id: #{tasks_id} ] Sending to Ingress API...Complete")
         end
 
-        # TODO: add support for on-premise connection
         def connection
-          connection_for_entity_type(nil)
+          @connection ||= begin
+                            tower_user = authentication.username unless on_premise?
+                            tower_passwd = authentication.password unless on_premise?
+
+                            connection_manager.connect(
+                              :base_url       => tower_hostname,
+                              :username       => tower_user,
+                              :password       => tower_passwd,
+                              :receptor_node  => endpoint.receptor_node.to_s.strip,
+                              :account_number => account_number
+                            )
+                          end
+        end
+
+        def on_premise?
+          @on_premise ||= endpoint.receptor_node.to_s.strip.present?
         end
 
         def set_connection_data!
           raise TopologicalInventory::Providers::Common::Operations::Source::ERROR_MESSAGES[:endpoint_not_found] unless endpoint
           raise TopologicalInventory::Providers::Common::Operations::Source::ERROR_MESSAGES[:authentication_not_found] unless authentication
 
-          self.tower_hostname = endpoint.host # TODO: taken from operations/source, but it's more complex in collectors_pool.rb
-          self.tower_user = authentication.username
-          self.tower_passwd = authentication.password
+          self.tower_hostname = full_hostname(endpoint)
         end
 
+        # TODO: Join with other operations
         def endpoint
           @endpoint ||= api_client.fetch_default_endpoint(source_id)
+        rescue => e
+          logger.error("ServiceInstance#refresh - Failed to fetch Endpoint for Source #{source_id}: #{e.message}")
         end
 
         def authentication
@@ -112,6 +166,27 @@ module TopologicalInventory
 
         def api_client
           @api_client ||= TopologicalInventory::Providers::Common::Operations::SourcesApiClient.new(identity)
+        end
+
+        # TODO: Join with PR #112 (ordering)
+        def account_number
+          return unless on_premise?
+          return @account_number if @account_number
+          return if identity.try(:[], 'x-rh-identity').nil?
+
+          identity_hash = JSON.parse(Base64.decode64(identity['x-rh-identity']))
+          @account_number = identity_hash.dig('identity', 'account_number')
+        rescue JSON::ParserError => e
+          logger.error("ServiceInstance#refresh: Task(id: #{'todo'}): Failed to parse identity header: #{e.message}")
+          nil
+        end
+
+        def full_hostname(endpoint)
+          if on_premise?
+            "receptor://#{endpoint.receptor_node}"
+          else
+            endpoint.host.tap { |host| host << ":#{endpoint.port}" if endpoint.port }
+          end
         end
       end
     end

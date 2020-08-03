@@ -1,4 +1,5 @@
 require "topological_inventory/ansible_tower/logging"
+require "topological_inventory/ansible_tower/connection_manager"
 require "topological_inventory/ansible_tower/targeted_refresh/processor"
 require "topological_inventory/ansible_tower/messaging_client"
 
@@ -10,6 +11,8 @@ module TopologicalInventory
         include Logging
 
         def run
+          TopologicalInventory::AnsibleTower::ConnectionManager.receptor_client
+
           # Open a connection to the messaging service
           logger.info("Topological Inventory AnsibleTower Refresh worker started...")
           client.subscribe_topic(queue_opts) do |message|
@@ -19,6 +22,7 @@ module TopologicalInventory
           logger.error("#{err.cause}\n#{err.backtrace.join("\n")}")
         ensure
           client&.close
+          TopologicalInventory::AnsibleTower::ConnectionManager.stop_receptor_client
         end
 
         private
