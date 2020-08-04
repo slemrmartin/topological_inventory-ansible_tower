@@ -6,6 +6,8 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Worker do
     let(:subject) { described_class.new }
     before do
       require "manageiq-messaging"
+      allow(TopologicalInventory::AnsibleTower::ConnectionManager).to receive_messages(:start_receptor_client => nil,
+                                                                                       :stop_receptor_client  => nil)
       allow(ManageIQ::Messaging::Client).to receive(:open).and_return(client)
       allow(client).to receive(:close)
       allow(subject).to receive(:logger).and_return(double('null_object').as_null_object)
