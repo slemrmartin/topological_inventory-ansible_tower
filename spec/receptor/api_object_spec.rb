@@ -205,8 +205,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
       it "calls receiver callbacks" do
         subject.send(:receiver=, receiver)
 
-        expect(receiver).to(receive(:on_success).with(msg_id, 'id' => 42))
-        expect(receiver).to(receive(:on_success).with(msg_id, 'id' => 1))
+        expect(receiver).to(receive(:on_success).with(msg_id, JSON.parse(response['body'])))
         subject.send(:on_success, msg_id, response)
 
         expect(receiver).to receive(:on_error).with(msg_id, code, response)

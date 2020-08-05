@@ -17,7 +17,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
       expect(parser).to receive(:parse_service_credential).with(service_credential).and_call_original
       expect(collector).to receive(:async_save_inventory).with(refresh_state_uuid, parser)
 
-      subject.on_success(nil, service_credential)
+      subject.on_success(nil, [service_credential])
 
       expect(subject.total_parts.value).to eq(1)
       expect(subject.sweep_scope.to_a).to eq([entity_type.to_sym])
@@ -43,7 +43,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
 
         expect(collector).to receive(:async_save_inventory)
 
-        subject.on_success(nil, service_offering)
+        subject.on_success(nil, [service_offering])
 
         expect(subject.total_parts.value).to eq(1)
         expect(subject.sweep_scope.to_a).to eq([entity_type.to_sym])
