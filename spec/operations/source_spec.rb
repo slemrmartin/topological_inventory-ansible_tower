@@ -50,12 +50,14 @@ RSpec.describe(TopologicalInventory::AnsibleTower::Operations::Source) do
     context "receptor based tower" do
       let(:api_client) { instance_double(TopologicalInventory::Providers::Common::Operations::SourcesApiClient) }
       let(:default_response) { {:status => 200, :body => {}.to_json, :headers => {}} }
+      let(:directive) { double('Directive', :call => nil) }
 
       before do
         allow(TopologicalInventory::Providers::Common::Operations::SourcesApiClient).to receive(:new).and_return(api_client)
         allow(TopologicalInventory::AnsibleTower::ConnectionManager).to receive(:receptor_client).and_return(receptor_client)
         allow(api_client).to receive(:fetch_authentication).and_return(TopologicalInventory::Providers::Common::Operations::Source::AUTH_NOT_NECESSARY)
         allow(api_client).to receive(:fetch_default_endpoint).and_return(OpenStruct.new(:receptor_node => "test-catalog"))
+        allow(receptor_client).to receive(:directive).and_return(directive)
       end
 
       it "hits the receptor controller" do
