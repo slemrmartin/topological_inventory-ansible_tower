@@ -3,8 +3,14 @@ module TopologicalInventory::AnsibleTower
     module ServiceOfferingNode
       def parse_service_offering_node(offering_node)
         node = offering_node[:node]
-        service_offering_ref = node.summary_fields.unified_job_template&.id&.to_s
-        service_offering = lazy_find(:service_offerings, :source_ref => service_offering_ref) if service_offering_ref
+
+        unified_job_type = node.summary_fields.unified_job_template&.unified_job_type.to_s
+
+        # Skipping reference if node's job type is inventory_update or project_update
+        if %w[job workflow_job].include?(unified_job_type)
+          unified_job_template_ref = node.summary_fields.unified_job_template&.id&.to_s
+          service_offering = lazy_find(:service_offerings, :source_ref => unified_job_template_ref) if unified_job_template_ref
+        end
 
         service_inventory = lazy_find(:service_inventories, :source_ref => node.inventory_id.to_s) if node.respond_to?(:inventory_id)
 
@@ -14,16 +20,17 @@ module TopologicalInventory::AnsibleTower
             :source_updated_at     => node.modified,
             :name                  => node.summary_fields.unified_job_template&.name,
             :service_inventory     => service_inventory,
-            :root_service_offering => lazy_find(:service_offerings, :source_ref => node.summary_fields.workflow_job_template.id.to_s),
             :service_offering      => service_offering,
+            :root_service_offering => lazy_find(:service_offerings, :source_ref => node.summary_fields.workflow_job_template.id.to_s),
             :extra                 => {
-              "job_type"      => node.job_type,
-              "success_nodes" => node.success_nodes_id,
-              "failure_nodes" => node.failure_nodes_id,
-              "always_nodes"  => node.always_nodes_id,
-              "limit"         => node.limit,
-              "job_tags"      => node.job_tags,
-              "skip_tags"     => node.skip_tags,
+              "job_type"         => node.job_type,
+              "success_nodes"    => node.success_nodes_id,
+              "failure_nodes"    => node.failure_nodes_id,
+              "always_nodes"     => node.always_nodes_id,
+              "limit"            => node.limit,
+              "job_tags"         => node.job_tags,
+              "skip_tags"        => node.skip_tags,
+              "unified_job_type" => unified_job_type
             }
           )
         )
