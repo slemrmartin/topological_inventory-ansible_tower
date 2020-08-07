@@ -118,9 +118,9 @@ module TopologicalInventory::AnsibleTower
       def on_success(msg_id, response)
         if receiver.respond_to?(:on_success)
           body = parse_kafka_response(response)
-          parse_result_set(body)
-          unless @collection.empty?
-            receiver.on_success(msg_id, @collection.shift)
+          collection = async_parse_result_set(body)
+          unless collection.empty?
+            receiver.on_success(msg_id, collection)
           end
         else
           raise NotImplementedError, "Receptor Receiver must implement 'on_success' method"
@@ -209,6 +209,19 @@ module TopologicalInventory::AnsibleTower
         when "Hash" then
           body["results"].each { |result| @collection << build_object(result) }
           body["next"]
+        end
+      end
+
+      # For Async it's not needed to return "next"
+      # because we're using pagination on catalog-plugin side
+      def async_parse_result_set(body)
+        case body.class.name
+        when "Array" then
+          body
+        when "Hash" then
+          body["results"].collect { |result| build_object(result) }
+        else
+          []
         end
       end
 

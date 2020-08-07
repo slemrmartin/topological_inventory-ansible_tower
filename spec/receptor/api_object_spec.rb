@@ -200,12 +200,12 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
       let(:receiver) { double('Receiver') }
       let(:msg_id) { '123' }
       let(:code) { '100' }
-      let(:response) { {'status' => '200', 'body' => [{'id' => 42}].to_json} }
+      let(:response) { {'status' => '200', 'body' => [{'id' => 42}, {'id' => 1}].to_json} }
 
       it "calls receiver callbacks" do
         subject.send(:receiver=, receiver)
 
-        expect(receiver).to(receive(:on_success).with(msg_id, 'id' => 42))
+        expect(receiver).to(receive(:on_success).with(msg_id, JSON.parse(response['body'])))
         subject.send(:on_success, msg_id, response)
 
         expect(receiver).to receive(:on_error).with(msg_id, code, response)
