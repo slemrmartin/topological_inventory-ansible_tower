@@ -44,6 +44,16 @@ module TopologicalInventory
           logger.error("ServiceInstance#refresh - Error: #{err.message}\n#{err.backtrace.join("\n")}")
         end
 
+        def async_save_inventory(refresh_state_uuid, parser)
+          refresh_state_part_collected_at = Time.now.utc
+          refresh_state_part_uuid = SecureRandom.uuid
+          save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
+        end
+
+        def async_collecting_finished(entity_type, refresh_state_uuid, total_parts)
+          logger.info("ServiceInstance#refresh: finished collecting of #{entity_type} (#{refresh_state_uuid}). Total parts: #{total_parts}")
+        end
+
         private
 
         attr_accessor :params, :source_id
@@ -95,20 +105,6 @@ module TopologicalInventory
                                 :receptor_params   => receptor_params)
         end
 
-        public
-
-        def async_save_inventory(refresh_state_uuid, parser)
-          refresh_state_part_collected_at = Time.now.utc
-          refresh_state_part_uuid = SecureRandom.uuid
-          save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
-        end
-
-        def async_collecting_finished(entity_type, refresh_state_uuid, total_parts)
-          logger.info("ServiceInstance#refresh: finished collecting of #{entity_type} (#{refresh_state_uuid}). Total parts: #{total_parts}")
-        end
-
-        private
-
         def refresh_part_cloud(tasks_id, refresh_state_uuid, refresh_state_part_uuid, query_params)
           parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => tower_hostname)
 
@@ -153,10 +149,14 @@ module TopologicalInventory
           @endpoint ||= api_client.fetch_default_endpoint(source_id)
         rescue => e
           logger.error("ServiceInstance#refresh - Failed to fetch Endpoint for Source #{source_id}: #{e.message}")
+          nil
         end
 
         def authentication
           @authentication ||= api_client.fetch_authentication(source_id, endpoint)
+        rescue => e
+          logger.error("ServiceInstance#refresh - Failed to fetch Authentication for Source #{source_id}: #{e.message}")
+          nil
         end
 
         # Queries Sources API in the context of first task
@@ -177,7 +177,7 @@ module TopologicalInventory
           identity_hash = JSON.parse(Base64.decode64(identity['x-rh-identity']))
           @account_number = identity_hash.dig('identity', 'account_number')
         rescue JSON::ParserError => e
-          logger.error("ServiceInstance#refresh: Task(id: #{'todo'}): Failed to parse identity header: #{e.message}")
+          logger.error("ServiceInstance#refresh - Failed to parse identity header: #{e.message}")
           nil
         end
 
@@ -187,6 +187,10 @@ module TopologicalInventory
           else
             endpoint.host.tap { |host| host << ":#{endpoint.port}" if endpoint.port }
           end
+        end
+
+        def default_refresh_type
+          'targeted-refresh'
         end
       end
     end

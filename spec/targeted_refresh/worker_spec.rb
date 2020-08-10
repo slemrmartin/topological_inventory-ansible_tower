@@ -12,6 +12,12 @@ RSpec.describe TopologicalInventory::AnsibleTower::TargetedRefresh::Worker do
   end
 
   describe "#run" do
+    before do
+      allow(TopologicalInventory::AnsibleTower::ConnectionManager).to receive_messages(:receptor_client       => nil,
+                                                                                       :start_receptor_client => nil,
+                                                                                       :stop_receptor_client  => nil)
+    end
+
     it "listens on the correct queue" do
       expect(client).to receive(:subscribe_topic)
         .with(hash_including(:service => topic_name))

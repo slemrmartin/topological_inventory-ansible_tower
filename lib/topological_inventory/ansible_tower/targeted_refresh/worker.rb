@@ -11,7 +11,7 @@ module TopologicalInventory
         include Logging
 
         def run
-          TopologicalInventory::AnsibleTower::ConnectionManager.receptor_client
+          TopologicalInventory::AnsibleTower::ConnectionManager.start_receptor_client
 
           # Open a connection to the messaging service
           logger.info("Topological Inventory AnsibleTower Refresh worker started...")
