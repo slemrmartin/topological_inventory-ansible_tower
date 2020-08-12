@@ -8,7 +8,8 @@ module TopologicalInventory::AnsibleTower
         super(source, metrics, :standalone_mode => standalone_mode)
         self.account_number = account_number # eq Tenant.external_tenant or account_number in x-rh-identity
         self.entity_types_collected_cnt = Concurrent::AtomicFixnum.new(0)
-        self.last_save_at   = nil
+        self.last_save_at = nil
+        self.max_wait_sync_threshold = ENV['RECEPTOR_COLLECTOR_MAX_WAIT_SYNC'] || 10
         self.receptor_node  = receptor_node
         self.tower_hostname = "receptor://#{receptor_node}" # For logging
       end
@@ -54,7 +55,7 @@ module TopologicalInventory::AnsibleTower
 
       private
 
-      attr_accessor :account_number, :entity_types_collected_cnt, :last_save_at, :receptor_node
+      attr_accessor :account_number, :entity_types_collected_cnt, :last_save_at, :max_wait_sync_threshold, :receptor_node
 
       def start_collector_threads
         self.last_save_at = nil
@@ -68,11 +69,12 @@ module TopologicalInventory::AnsibleTower
 
         # Wait until all async responses are sent
         while entity_types_collected_cnt.value < service_catalog_entity_types.size
-          if last_save_at.nil? || (last_save_at < 2.minutes.ago && last_save_at >= 10.minutes.ago)
+          if last_save_at.nil? || (last_save_at < ReceptorController::Client::Configuration.default.response_timeout.minutes.ago && last_save_at >= max_wait_sync_threshold.minutes.ago)
             # Either error in collector or big kafka lag from receptor
             logger.warn("[ASYNC] Collector for source_uid: #{source}: Last response received at #{last_save_at}")
             sleep(60)
-          elsif last_save_at < 10.minutes.ago
+          elsif last_save_at < max_wait_sync_threshold.minutes.ago
+            logger.warn("[ASYNC] Collector for source_uid: #{source}: Only #{entity_types_collected_cnt.value} of #{service_catalog_entity_types.size} entity types were succesfully received")
             break
           else
             sleep(1)
