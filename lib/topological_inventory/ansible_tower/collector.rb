@@ -23,7 +23,7 @@ module TopologicalInventory
         until finished?
           ensure_collector_threads
 
-          collector_threads.each_value(&:join)
+          wait_for_collected_data
 
           standalone_mode ? sleep(poll_time) : stop
         end
@@ -32,6 +32,10 @@ module TopologicalInventory
       private
 
       attr_accessor :connection_manager, :metrics, :tower_hostname
+
+      def wait_for_collected_data
+        collector_threads.each_value(&:join)
+      end
 
       def endpoint_types
         %w[service_catalog]
