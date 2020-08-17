@@ -27,6 +27,8 @@ module TopologicalInventory::AnsibleTower
       end
 
       def on_success(msg_id, entities)
+        collector.response_received!
+
         # TODO: without tower hostname, it's not possible to construct job URL
         parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => 'https://tower.example.com')
         entities.each do |entity|
@@ -52,16 +54,19 @@ module TopologicalInventory::AnsibleTower
       end
 
       def on_error(msg_id, code, response)
+        collector.response_received!
         logger.error("[ERROR] Collecting #{entity_type}, :source_uid => #{collector.send(:source)}, :refresh_state_uuid => #{refresh_state_uuid}); MSG ID: #{msg_id}, CODE: #{code}, RESPONSE: #{response}")
       end
 
       def on_timeout(msg_id)
+        collector.response_received!
         logger.error("[ERROR] Timeout when collecting #{entity_type}, :source_uid => #{collector.send(:source)}, :refresh_state_uuid => #{refresh_state_uuid}; MSG ID: #{msg_id}, ")
       end
 
       # There can be multiple 'on_eof' calls
       # i.e. service_offerings entity type consists of 2 tower entity types (job templates/workflow templates)
       def on_eof(_msg_id)
+        collector.response_received!
         async_requests_remaining.decrement
 
         if async_requests_remaining.value == 0

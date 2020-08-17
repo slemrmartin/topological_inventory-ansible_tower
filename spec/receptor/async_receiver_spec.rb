@@ -10,6 +10,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
 
   before do
     allow(TopologicalInventory::AnsibleTower::Parser).to receive(:new).and_return(parser)
+    allow(collector).to receive(:response_received!)
   end
 
   describe "#on_success" do
@@ -48,6 +49,18 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
         expect(subject.total_parts.value).to eq(1)
         expect(subject.sweep_scope.to_a).to eq([entity_type.to_sym])
       end
+    end
+  end
+
+  context "heartbeat" do
+    it "informs collector about any received message" do
+      allow(collector).to receive_messages(:async_save_inventory => nil, :source => '1234')
+      expect(collector).to receive(:response_received!).exactly(4).times
+
+      subject.on_success('1', [service_credential])
+      subject.on_error('2', '1', 'Some error')
+      subject.on_timeout('3')
+      subject.on_eof('4')
     end
   end
 end

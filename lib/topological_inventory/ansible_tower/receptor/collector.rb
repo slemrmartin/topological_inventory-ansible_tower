@@ -8,7 +8,7 @@ module TopologicalInventory::AnsibleTower
         super(source, metrics, :standalone_mode => standalone_mode)
         self.account_number = account_number # eq Tenant.external_tenant or account_number in x-rh-identity
         self.entity_types_collected_cnt = Concurrent::AtomicFixnum.new(0)
-        self.last_save_at = nil
+        self.last_response_at = nil
         self.max_wait_sync_threshold = ENV['RECEPTOR_COLLECTOR_MAX_WAIT_SYNC'] || 10
         self.receptor_node  = receptor_node
         self.tower_hostname = "receptor://#{receptor_node}" # For logging
@@ -38,7 +38,6 @@ module TopologicalInventory::AnsibleTower
       end
 
       def async_save_inventory(refresh_state_uuid, parser)
-        self.last_save_at = Time.now.utc
         refresh_state_part_collected_at = Time.now.utc
         refresh_state_part_uuid = SecureRandom.uuid
         save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
@@ -53,12 +52,18 @@ module TopologicalInventory::AnsibleTower
         logger.sweeping(:finish, source, sweep_scope, refresh_state_uuid)
       end
 
+      def response_received!
+        self.last_response_at = Time.now.utc
+      end
+
       private
 
-      attr_accessor :account_number, :entity_types_collected_cnt, :last_save_at, :max_wait_sync_threshold, :receptor_node
+      attr_accessor :account_number, :entity_types_collected_cnt, :last_response_at, :max_wait_sync_threshold,
+                    :receptor_node, :refresh_started_at
 
       def start_collector_threads
-        self.last_save_at = nil
+        self.last_response_at = nil
+        self.refresh_started_at = Time.now.utc
         entity_types_collected_cnt.value = 0
 
         super
@@ -69,15 +74,23 @@ module TopologicalInventory::AnsibleTower
 
         # Wait until all async responses are sent
         while entity_types_collected_cnt.value < service_catalog_entity_types.size
-          if last_save_at.nil? || (last_save_at < ReceptorController::Client::Configuration.default.response_timeout.minutes.ago && last_save_at >= max_wait_sync_threshold.minutes.ago)
+          if last_response_at.nil?
+            if refresh_started_at >= max_wait_sync_threshold.minutes.ago.utc
+              logger.warn("[ASYNC] Collector for source_uid: #{source}: No response received since #{refresh_started_at}")
+              sleep(10)
+            else
+              logger.error("[ASYNC] Collector for source_uid: #{source}: No responses received. Waiting finished")
+              break
+            end
+          elsif last_response_at >= (ReceptorController::Client::Configuration.default.response_timeout + 10.seconds).ago.utc
+            sleep(1) # standard situation
+          elsif last_response_at >= max_wait_sync_threshold.minutes.ago.utc
             # Either error in collector or big kafka lag from receptor
-            logger.warn("[ASYNC] Collector for source_uid: #{source}: Last response received at #{last_save_at}")
-            sleep(60)
-          elsif last_save_at < max_wait_sync_threshold.minutes.ago
-            logger.warn("[ASYNC] Collector for source_uid: #{source}: Only #{entity_types_collected_cnt.value} of #{service_catalog_entity_types.size} entity types were succesfully received")
+            logger.warn("[ASYNC] Collector for source_uid: #{source}: Last response received at #{last_response_at}")
+            sleep(10)
+          else # last_response_at < max_wait_sync_threshold.minutes.ago
+            logger.error("[ASYNC] Collector for source_uid: #{source}: Only #{entity_types_collected_cnt.value} of #{service_catalog_entity_types.size} entity types were successfully received. Waiting finished")
             break
-          else
-            sleep(1)
           end
         end
       end
