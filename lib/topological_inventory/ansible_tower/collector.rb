@@ -46,7 +46,6 @@ module TopologicalInventory
            service_offerings
            service_instances
            service_offering_nodes
-           service_instance_nodes
            service_credentials
            service_credential_types]
       end
