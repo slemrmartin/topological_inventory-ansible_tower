@@ -7,6 +7,11 @@ module TopologicalInventory::AnsibleTower
   class CollectorsPool < TopologicalInventory::Providers::Common::CollectorsPool
     include Logging
 
+    def initialize(config_name, metrics, collector_poll_time: nil, default_limit: 100, thread_pool_size: 2)
+      super(config_name, metrics, :collector_poll_time => collector_poll_time, :thread_pool_size => thread_pool_size)
+      self.default_limit = default_limit
+    end
+
     def path_to_config
       File.expand_path("../../../config", File.dirname(__FILE__))
     end
@@ -40,14 +45,20 @@ module TopologicalInventory::AnsibleTower
                                                                  secret["username"],
                                                                  secret["password"],
                                                                  metrics,
+                                                                 :default_limit   => default_limit,
                                                                  :standalone_mode => false)
       else
         TopologicalInventory::AnsibleTower::Receptor::Collector.new(source.source,
                                                                     source.receptor_node.to_s.strip,
                                                                     source.account_number.to_s.strip,
                                                                     metrics,
+                                                                    :default_limit   => default_limit,
                                                                     :standalone_mode => false)
       end
     end
+
+    private
+
+    attr_accessor :default_limit
   end
 end

@@ -12,8 +12,8 @@ module TopologicalInventory
       require "topological_inventory/ansible_tower/collector/service_catalog"
       include TopologicalInventory::AnsibleTower::Collector::ServiceCatalog
 
-      def initialize(source, metrics, poll_time: 60, standalone_mode: true)
-        super(source, :poll_time => poll_time, :standalone_mode => standalone_mode)
+      def initialize(source, metrics, default_limit: 100, poll_time: 60, standalone_mode: true)
+        super(source, :default_limit => default_limit, :poll_time => poll_time, :standalone_mode => standalone_mode)
         self.connection_manager = TopologicalInventory::AnsibleTower::ConnectionManager.new(source)
         self.metrics            = metrics
         self.tower_hostname     = ''
