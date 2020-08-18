@@ -42,6 +42,8 @@ module TopologicalInventory::AnsibleTower
           msg = "[ERROR] Collecting #{entity_type}, :source_uid => #{collector.send(:source)}, :refresh_state_uuid => #{refresh_state_uuid}); MSG ID: #{msg_id}, "
           msg += ":message => #{exception.message}\n#{exception.backtrace.join("\n")}"
           logger.error(msg)
+        ensure
+          collector.response_received!
         end
 
         if entities.present?
