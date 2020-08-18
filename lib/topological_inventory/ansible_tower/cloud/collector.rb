@@ -4,8 +4,8 @@ module TopologicalInventory::AnsibleTower
   module Cloud
     class Collector < TopologicalInventory::AnsibleTower::Collector
       def initialize(source, tower_hostname, tower_user, tower_passwd, metrics,
-                     poll_time: 60, standalone_mode: true)
-        super(source, metrics, :poll_time => poll_time, :standalone_mode => standalone_mode)
+                     default_limit: 100, poll_time: 60, standalone_mode: true)
+        super(source, metrics, :default_limit => default_limit, :poll_time => poll_time, :standalone_mode => standalone_mode)
 
         self.tower_hostname = tower_hostname
         self.tower_user     = tower_user

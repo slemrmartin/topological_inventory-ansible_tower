@@ -4,8 +4,8 @@ require "topological_inventory/ansible_tower/receptor/async_receiver"
 module TopologicalInventory::AnsibleTower
   module Receptor
     class Collector < TopologicalInventory::AnsibleTower::Collector
-      def initialize(source, receptor_node, account_number, metrics, standalone_mode: true)
-        super(source, metrics, :standalone_mode => standalone_mode)
+      def initialize(source, receptor_node, account_number, metrics, default_limit: 100, standalone_mode: true)
+        super(source, metrics, :default_limit => default_limit, :standalone_mode => standalone_mode)
         self.account_number = account_number # eq Tenant.external_tenant or account_number in x-rh-identity
         self.entity_types_collected_cnt = Concurrent::AtomicFixnum.new(0)
         self.last_response_at = nil

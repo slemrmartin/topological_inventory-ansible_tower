@@ -44,6 +44,8 @@ def parse_args
         :type => :string, :default => ENV["QUEUE_HOST"] || "localhost"
     opt :queue_port, "Kafka messaging: port",
         :type => :integer, :default => ENV["QUEUE_PORT"]&.to_i || 9092
+    opt :page_size, "Default request page size",
+        :type => :integer, :default => (ENV["PAGE_SIZE"] || 100).to_i
   end
 end
 
@@ -86,17 +88,19 @@ if args[:config].nil?
                 TopologicalInventory::AnsibleTower::Cloud::Collector.new(args[:source],
                                                                          "#{args[:scheme]}://#{args[:host]}:#{args[:port]}",
                                                                          args[:user], args[:password],
-                                                                         metrics)
+                                                                         metrics,
+                                                                         :default_limit => args[:page_size])
               else
                 TopologicalInventory::AnsibleTower::Receptor::Collector.new(args[:source],
                                                                             args[:receptor_node],
                                                                             args[:account_number],
-                                                                            metrics)
+                                                                            metrics,
+                                                                            :default_limit => args[:page_size])
               end
 
   collector.collect!
 else
-  pool = TopologicalInventory::AnsibleTower::CollectorsPool.new(args[:config], metrics)
+  pool = TopologicalInventory::AnsibleTower::CollectorsPool.new(args[:config], metrics, :default_limit => args[:page_size])
   pool.run!
 end
 
