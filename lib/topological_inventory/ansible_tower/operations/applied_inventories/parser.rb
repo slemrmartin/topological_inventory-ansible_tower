@@ -1,6 +1,7 @@
 require "topological_inventory-api-client"
 require "topological_inventory/providers/common/operations/topology_api_client"
 require "topological_inventory/ansible_tower/operations/applied_inventories/tree_item"
+
 module TopologicalInventory
   module AnsibleTower
     module Operations
@@ -79,6 +80,8 @@ module TopologicalInventory
           def load_child_nodes(parent_wf_template_tree_item)
             root_wf_template = parent_wf_template_tree_item.item
             topology_api_client.list_service_offering_nodes(:filter => { :root_service_offering_id => root_wf_template.id }).data.each do |node|
+              # Skip nodes of type 'inventory_update' or 'project_update'
+              next unless %w[job workflow_job].include?(node.extra[:unified_job_type].to_s)
 
               node_tree_item = TreeItem.new(node)
               TreeItem.connect(:child  => node_tree_item,
@@ -92,21 +95,23 @@ module TopologicalInventory
           def load_templates_for_nodes(parent_wf_template_tree_item)
             child_templates_ids = parent_wf_template_tree_item.children.collect { |tree_item| tree_item.item&.service_offering_id }.compact.uniq
 
-            topology_api_client.list_service_offerings(:filter => { :id => { :eq => child_templates_ids }}).data.each do |template|
-              template_tree_item = TreeItem.new(template)
+            service_offerings = topology_api_client.list_service_offerings(:filter => {:id => {:eq => child_templates_ids}}).data
+            parent_wf_template_tree_item.children.each do |node_tree_item|
+              template_tree_item = nil
+              service_offerings.each do |template|
+                next if template.id != node_tree_item.item.service_offering_id
 
-              parent_wf_template_tree_item.children.each do |node_tree_item|
-                if template.id == node_tree_item.item.service_offering_id
-                  TreeItem.connect(:child  => template_tree_item,
-                                   :parent => node_tree_item)
-                  break
-                end
+                template_tree_item = TreeItem.new(template)
+                TreeItem.connect(:child  => template_tree_item,
+                                 :parent => node_tree_item)
+                break
               end
 
-              if template_tree_item.parent.nil?
-                raise "Workflow Node for Template not found! [Template: #{template.id}]"
+              if template_tree_item.nil?
+                raise "Template for Workflow Node not found! [Node: #{node_tree_item.item&.id}]"
               end
 
+              template = template_tree_item.item
               # Set template inventory key for latter one-query load
               template_inventories[template] = { :inventory_id => template.service_inventory_id } if template.service_inventory_id
               #

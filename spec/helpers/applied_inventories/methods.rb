@@ -32,9 +32,9 @@ module AppliedInventories
       # calls in parser#load_template_inventories
       template_inventories.compact!
       if template_inventories.present?
-        expect(topology_api_client).to receive(:list_service_inventories)
-                                         .with(:filter => {:id => {:eq => match_array(template_inventories.map(&:id))}})
-                                         .and_return(inventory_collection(template_inventories))
+        expect(topology_api_client).to(receive(:list_service_inventories)
+                                         .with(:filter => {:id => {:eq => match_array(template_inventories.map(&:id).uniq)}})
+                                         .and_return(inventory_collection(template_inventories)))
       end
     end
 
@@ -58,14 +58,15 @@ module AppliedInventories
       template_ids, templates, templates_hash = [], [], []
       parent_template[:child_nodes].each do |child_node|
         node_inventories << child_node[:inventory]
+        next if child_node[:template].blank?
 
         templates << child_node[:template][:template]
         templates_hash << child_node[:template]
         template_ids << child_node[:template][:template].id
       end
-      expect(topology_api_client).to receive(:list_service_offerings)
-                                       .with(:filter => {:id => { :eq => match_array(template_ids) }})
-                                       .and_return(template_collection(templates))
+      expect(topology_api_client).to(receive(:list_service_offerings)
+                                       .with(:filter => {:id => {:eq => match_array(template_ids.uniq)}})
+                                       .and_return(template_collection(templates)))
 
       templates_hash.each do |template_hash|
         stub_api_init_template(template_hash, template_inventories, node_inventories)
