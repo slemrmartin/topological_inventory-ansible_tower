@@ -15,6 +15,7 @@ module TopologicalInventory
         end
 
         def run
+          TopologicalInventory::AnsibleTower::ConnectionManager.start_receptor_client
           # Open a connection to the messaging service
           client = ManageIQ::Messaging::Client.open(messaging_client_opts)
 

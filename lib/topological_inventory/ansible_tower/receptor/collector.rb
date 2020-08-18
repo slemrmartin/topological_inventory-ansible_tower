@@ -14,6 +14,11 @@ module TopologicalInventory::AnsibleTower
         self.tower_hostname = "receptor://#{receptor_node}" # For logging
       end
 
+      def collect!
+        TopologicalInventory::AnsibleTower::ConnectionManager.start_receptor_client
+        super
+      end
+
       def connection_for_entity_type(_entity_type)
         connection_manager.connect(:account_number => account_number,
                                    :receptor_node  => receptor_node)
