@@ -95,13 +95,20 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
     let(:post_data) { {:service_parameters => {"username" => "user1", "quest" => "Test Topology", "airspeed" => 50}, :provider_control_parameters => {}} }
 
     context "sync" do
+      let(:job_order_path) { '/api/v2/job_templates/1' }
+      let(:api_object) { described_class.new(api, connection, job_order_path) }
+
       it "sends request to the default path and type" do
         body = {:key => :value}
-        expect(subject).to(receive(:send_request)
-                             .with(:post, '/api/v2/job_templates', :data => post_data)
-                             .and_return('status' => 200, 'body' => body))
+        expect(described_class).to(receive(:new)
+                                     .with(api, connection, job_order_path)
+                                     .and_return(api_object))
 
-        response = subject.post(post_data)
+        expect(api_object).to(receive(:send_request)
+                                .with(:post, job_order_path, :data => post_data)
+                                .and_return('status' => 200, 'body' => body))
+
+        response = api.post(job_order_path, post_data)
 
         expect(response).to be_kind_of(TopologicalInventory::AnsibleTower::Receptor::Response)
         expect(response.body).to eq(body)

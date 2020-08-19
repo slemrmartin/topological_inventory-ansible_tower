@@ -31,7 +31,7 @@ module TopologicalInventory
             context = {
               :service_instance => {
                 :job_status => job.status,
-                :url => client.job_external_url(job)
+                :url        => client.job_external_url(job)
               }
             }
             update_task(task_id,
