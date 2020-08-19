@@ -51,6 +51,8 @@ module TopologicalInventory::AnsibleTower
       def async_sweep_inventory(refresh_state_uuid, sweep_scope, total_parts, refresh_state_started_at)
         logger.sweeping(:start, source, sweep_scope, refresh_state_uuid)
 
+        logger.debug("Received #{entity_types_collected_cnt.value} of #{service_catalog_entity_types.size} complete responses")
+
         sweep_inventory(inventory_name, schema_name, refresh_state_uuid, total_parts, sweep_scope, refresh_state_started_at)
         entity_types_collected_cnt.increment # Real finish of entity_type's requests
 
@@ -98,6 +100,8 @@ module TopologicalInventory::AnsibleTower
             break
           end
         end
+
+        logger.info("Total complete entity_types received: #{entity_types_collected_cnt.value} of #{service_catalog_entity_types.size}")
       end
     end
   end

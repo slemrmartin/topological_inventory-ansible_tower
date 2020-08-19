@@ -55,7 +55,8 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver do
   context "heartbeat" do
     it "informs collector about any received message" do
       allow(collector).to receive_messages(:async_save_inventory => nil, :source => '1234')
-      expect(collector).to receive(:response_received!).exactly(4).times
+      # 4 for each method and 1 for each entity in on_success
+      expect(collector).to receive(:response_received!).exactly(5).times
 
       subject.on_success('1', [service_credential])
       subject.on_error('2', '1', 'Some error')
