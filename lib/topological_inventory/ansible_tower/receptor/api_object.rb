@@ -28,6 +28,11 @@ module TopologicalInventory::AnsibleTower
         raw_kafka_response(response)
       end
 
+      def post(data)
+        response = send_request(:post, endpoint, :data => data)
+        raw_kafka_response(response)
+      end
+
       def find(id)
         path = File.join(endpoint, id.to_s, '/')
 
