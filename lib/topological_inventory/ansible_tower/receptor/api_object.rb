@@ -48,7 +48,7 @@ module TopologicalInventory::AnsibleTower
       def find_all_by_url(url, params = nil, receptor_opts = {})
         if async?
           @collection = []
-          send_request(:get, url, params, receptor_opts)
+          send_request(:get, url, params, :receptor_opts => receptor_opts)
         else
           Enumerator.new do |yielder|
             @collection   = []
@@ -80,13 +80,13 @@ module TopologicalInventory::AnsibleTower
 
       attr_accessor :receiver, :type
 
-      def build_payload(http_method, path, params = nil, receptor_opts = {})
+      def build_payload(http_method, path, params = nil, post_data = nil, receptor_opts = {})
         slug = path.to_s
         slug += "?#{params.to_query}" if params
         payload = {
           'method'          => http_method.to_s.upcase,
           'href_slug'       => slug,
-          'params'          => params,
+          'params'          => post_data,
           'fetch_all_pages' => !!receptor_opts[:fetch_all_pages]
         }
         %i[accept_encoding apply_filter].each do |opt|
@@ -96,8 +96,8 @@ module TopologicalInventory::AnsibleTower
         payload
       end
 
-      def send_request(http_method, path, params = nil, receptor_opts = {})
-        payload = build_payload(http_method, path, params, receptor_opts)
+      def send_request(http_method, path, params = nil, data: nil, receptor_opts: {})
+        payload = build_payload(http_method, path, params, data, receptor_opts)
 
         directive_type = async? ? :non_blocking : :blocking
         directive = receptor_client.directive(connection.account_number,
