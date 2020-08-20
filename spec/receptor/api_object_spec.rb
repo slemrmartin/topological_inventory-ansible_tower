@@ -193,7 +193,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::ApiObject do
         payload = {
           'method'          => 'GET',
           'href_slug'       => '/api/v2/job_templates?id__in=42%2C1',
-          'params'          => query_params,
+          'params'          => nil,
           'fetch_all_pages' => true,
           'accept_encoding' => 'gzip'
         }

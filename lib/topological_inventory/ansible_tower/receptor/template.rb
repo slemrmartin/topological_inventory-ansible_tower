@@ -5,7 +5,7 @@ module TopologicalInventory::AnsibleTower
       def launch(post_data)
         path = File.join(endpoint, id.to_s, '/')
 
-        response = send_request(:post, path, post_data)
+        response = send_request(:post, path, :data => post_data)
         parse_response(response)
 
         job = JSON.parse(response)
