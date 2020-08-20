@@ -139,7 +139,10 @@ module TopologicalInventory
 
         def set_connection_data!
           raise TopologicalInventory::Providers::Common::Operations::Source::ERROR_MESSAGES[:endpoint_not_found] unless endpoint
-          raise TopologicalInventory::Providers::Common::Operations::Source::ERROR_MESSAGES[:authentication_not_found] unless authentication
+
+          unless on_premise?
+            raise TopologicalInventory::Providers::Common::Operations::Source::ERROR_MESSAGES[:authentication_not_found] unless authentication
+          end
 
           self.tower_hostname = full_hostname(endpoint)
         end

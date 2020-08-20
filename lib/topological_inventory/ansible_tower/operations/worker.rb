@@ -13,10 +13,11 @@ module TopologicalInventory
 
         def run
           TopologicalInventory::AnsibleTower::ConnectionManager.start_receptor_client
+          logger.info("Topological Inventory AnsibleTower Operations worker started...")
+
           # Open a connection to the messaging service
           heartbeat_thread(client)
 
-          logger.info("Topological Inventory AnsibleTower Operations worker started...")
           client.subscribe_topic(queue_opts) do |message|
             log_with(message.payload&.fetch_path('request_context', 'x-rh-insights-request-id')) do
               model, method = message.message.to_s.split(".")
