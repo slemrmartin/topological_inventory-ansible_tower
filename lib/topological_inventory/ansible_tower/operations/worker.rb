@@ -3,6 +3,7 @@ require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/ansible_tower/operations/processor"
 require "topological_inventory/ansible_tower/operations/source"
 require "topological_inventory/ansible_tower/connection_manager"
+require "topological_inventory/providers/common/operations/health_check"
 
 module TopologicalInventory
   module AnsibleTower
@@ -47,6 +48,7 @@ module TopologicalInventory
           raise
         ensure
           message.ack
+          TopologicalInventory::Providers::Common::Operations::HealthCheck.touch_file
         end
 
         def queue_name
