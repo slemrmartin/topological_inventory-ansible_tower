@@ -1,4 +1,5 @@
 require "topological_inventory/ansible_tower/collector"
+require "topological_inventory/providers/common/operations/source"
 require "topological_inventory/providers/common/operations/sources_api_client"
 require "topological_inventory/ansible_tower/receptor/async_receiver"
 
