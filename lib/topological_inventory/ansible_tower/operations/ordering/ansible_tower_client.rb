@@ -1,20 +1,22 @@
 require "topological_inventory/ansible_tower/logging"
 require "topological_inventory/ansible_tower/connection_manager"
-require "topological_inventory/ansible_tower/operations/core/sources_api_client"
-require "topological_inventory/ansible_tower/operations/core/topology_api_client"
+require "topological_inventory/providers/common/mixins/sources_api"
+require "topological_inventory/providers/common/mixins/x_rh_headers"
 
 module TopologicalInventory
   module AnsibleTower
     module Operations
-      module Core
+      module Ordering
         class AnsibleTowerClient
           include Logging
-          include Core::TopologyApiClient
+          include ::TopologicalInventory::Providers::Common::Mixins::SourcesApi
+          include ::TopologicalInventory::Providers::Common::Mixins::XRhHeaders
 
-          attr_accessor :connection_manager
+          attr_accessor :connection_manager, :operation
 
           def initialize(source_id, task_id, identity = nil)
             self.identity   = identity
+            self.operation  = 'ServiceOffering#order'
             self.source_id  = source_id
             self.task_id    = task_id
 
@@ -48,9 +50,9 @@ module TopologicalInventory
           #     }"
           def order_service(job_type, job_template_id, order_params)
             job_template = if job_type == 'workflow_job_template'
-                             ansible_tower.api.workflow_job_templates.find(job_template_id)
+                             connection.api.workflow_job_templates.find(job_template_id)
                            else
-                             ansible_tower.api.job_templates.find(job_template_id)
+                             connection.api.job_templates.find(job_template_id)
                            end
 
             job = job_template.launch(job_values(order_params))
@@ -80,7 +82,7 @@ module TopologicalInventory
           end
 
           def job_external_url(job)
-            tower_host = [default_endpoint.scheme, default_endpoint.host].join('://')
+            tower_host = [endpoint.scheme, endpoint.host].join('://')
             self.class.job_external_url(job, tower_host)
           end
 
@@ -100,51 +102,24 @@ module TopologicalInventory
             if order_parameters["service_parameters"].blank?
               {}
             else
-              { :extra_vars => order_parameters["service_parameters"] }
+              {:extra_vars => order_parameters["service_parameters"]}
             end
           end
 
-          def sources_api
-            @sources_api ||= Core::SourcesApiClient.new(identity)
-          end
+          def connection
+            @connection ||= begin
+                              tower_user = authentication.username unless on_premise?
+                              tower_passwd = authentication.password unless on_premise?
+                              account_number = account_number_by_identity(identity) unless on_premise?
 
-          def default_endpoint
-            @default_endpoint ||= sources_api.fetch_default_endpoint(source_id)
-          end
-
-          def authentication
-            @authentication ||= sources_api.fetch_authentication(source_id, default_endpoint)
-          end
-
-          def verify_ssl_mode
-            default_endpoint.verify_ssl ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
-          end
-
-          # TODO: Join with availability_check methods
-          def ansible_tower
-            @ansible_tower ||= connection_manager.connect(
-              :base_url       => full_hostname(default_endpoint),
-              :username       => authentication.try(:username),
-              :password       => authentication.try(:password),
-              :verify_ssl     => verify_ssl_mode,
-              :receptor_node  => default_endpoint.receptor_node.to_s.strip,
-              :account_number => account_number
-            )
-          end
-
-          def account_number
-            return @account_number if @account_number
-            return if identity.try(:[], 'x-rh-identity').nil?
-
-            identity_hash = JSON.parse(Base64.decode64(identity['x-rh-identity']))
-            @account_number = identity_hash.dig('identity', 'account_number')
-          rescue JSON::ParserError => e
-            logger.error("ServiceOffering#order: Task(id: #{task_id}): Failed to parse identity header: #{e.message}")
-            nil
-          end
-
-          def full_hostname(endpoint)
-            endpoint.host.tap { |host| host << ":#{endpoint.port}" if endpoint.port }
+                              connection_manager.connect(
+                                :base_url       => full_hostname(endpoint),
+                                :username       => tower_user,
+                                :password       => tower_passwd,
+                                :receptor_node  => endpoint.receptor_node.to_s.strip,
+                                :account_number => account_number
+                              )
+                            end
           end
         end
       end
