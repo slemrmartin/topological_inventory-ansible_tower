@@ -13,6 +13,7 @@ module TopologicalInventory
 
         def run
           TopologicalInventory::AnsibleTower::ConnectionManager.start_receptor_client
+          sleep 5
           logger.info("Topological Inventory AnsibleTower Operations worker started...")
 
           client.subscribe_topic(queue_opts) do |message|
