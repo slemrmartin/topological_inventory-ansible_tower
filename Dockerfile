@@ -17,7 +17,7 @@ WORKDIR $WORKDIR
 
 COPY docker-assets/librdkafka-1.5.0.tar.gz /tmp/librdkafka.tar.gz
 RUN cd /tmp && tar -xf /tmp/librdkafka.tar.gz && cd librdkafka-1.5.0 && \
-    ./configure && \
+    ./configure --prefix=/usr && \
     make -j2 && make install && \
     rm -rf /tmp/librdkafka*
 
@@ -25,7 +25,6 @@ COPY Gemfile $WORKDIR
 RUN echo "gem: --no-document" > ~/.gemrc && \
     gem install bundler --conservative --without development:test && \
     bundle install --jobs 8 --retry 3 && \
-    find $(gem env gemdir)/gems/ | grep "\.s\?o$" | xargs rm -rvf && \
     rm -rvf $(gem env gemdir)/cache/* && \
     rm -rvf /root/.bundle/cache
 
