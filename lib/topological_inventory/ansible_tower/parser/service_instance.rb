@@ -28,8 +28,8 @@ module TopologicalInventory::AnsibleTower
 
         collections.service_instances.build(
           parse_base_item(job).merge(
-            :source_ref       => job.id.to_s,
-            :service_offering => lazy_find(:service_offerings, :source_ref => job.unified_job_template_id.to_s),
+            :source_ref            => job.id.to_s,
+            :service_offering      => lazy_find(:service_offerings, :source_ref => job.unified_job_template_id.to_s),
             # it creates skeletal service_plans because not all jobs have corresponding survey
             :service_plan          => lazy_find(:service_plans, :source_ref => job.unified_job_template_id.to_s),
             :service_inventory     => service_inventory,
@@ -42,10 +42,32 @@ module TopologicalInventory::AnsibleTower
         if job.summary_fields && job_hash[:job_type] == :job
           job.summary_fields.credentials.each do |credential|
             collections.service_instance_service_credentials.build(
-                :service_instance   => lazy_find(:service_instances, :source_ref => job.id.to_s),
-                :service_credential => lazy_find(:service_credentials, :source_ref => credential.id.to_s)
+              :service_instance   => lazy_find(:service_instances, :source_ref => job.id.to_s),
+              :service_credential => lazy_find(:service_credentials, :source_ref => credential.id.to_s)
             )
           end
+        end
+      end
+
+      def self.included(klass)
+        klass.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def receptor_filter_service_instances
+          receptor_filter_list(:fields         => %i[id
+                                                     artifacts
+                                                     created
+                                                     extra_vars
+                                                     finished
+                                                     inventory
+                                                     started
+                                                     status
+                                                     unified_job_template],
+                               :related        => %i[inventory
+                                                     unified_job_template],
+                               :summary_fields => %i[credentials
+                                                     source_workflow_job])
         end
       end
     end

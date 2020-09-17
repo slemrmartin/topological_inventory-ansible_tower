@@ -13,6 +13,20 @@ module TopologicalInventory::AnsibleTower
           )
         )
       end
+
+      def self.included(klass)
+        klass.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def receptor_filter_service_credentials
+          receptor_filter_list(:fields  => %i[id
+                                              created
+                                              credential_type
+                                              description name],
+                               :related => %i[credential_type])
+        end
+      end
     end
   end
 end

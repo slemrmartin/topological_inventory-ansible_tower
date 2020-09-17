@@ -32,6 +32,17 @@ module TopologicalInventory::AnsibleTower
       props
     end
 
+    # Filtering of fields by JMESPath language (implemented by receptor_catalog plugin)
+    # Option 'apply_filter' of collector's receptor_params
+    def self.receptor_filter_list(fields:, related: nil, summary_fields: nil)
+      filter = []
+      filter << fields.collect { |col| "#{col}:#{col}" }.join(',') if fields
+      filter << "related:{#{related.collect { |col| "#{col}:related.#{col}" }.join(',')}}" if related
+      filter << "summary_fields:{#{summary_fields.collect { |col| "#{col}:summary_fields.#{col}" }.join(',')}}" if summary_fields
+
+      {:results => "results[].{#{filter.join(',')}}"}
+    end
+
     protected
 
     attr_accessor :tower_url

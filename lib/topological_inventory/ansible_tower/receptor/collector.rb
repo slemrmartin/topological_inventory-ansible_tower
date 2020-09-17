@@ -37,10 +37,12 @@ module TopologicalInventory::AnsibleTower
                                      refresh_state_started_at,
                                      :sweeping_enabled => !sweeping_disabled)
 
-        # opts = {:fetch_all_pages => true, :accept_encoding => 'gzip', :apply_filter => nil}
         receptor_params = {:accept_encoding => 'gzip', :fetch_all_pages => true}
-        query_params    = {:page_size => limits[entity_type]}
+        receptor_params[:apply_filter] = parser_class.send("receptor_filter_#{entity_type}")
+
+        query_params = {:page_size => limits[entity_type]}
         query_params[:modified__gt] = last_modified_at if scheduler.do_partial_refresh?(source)
+
         send("get_#{entity_type}", connection, query_params,
              :on_premise => true, :receptor_receiver => receiver, :receptor_params => receptor_params)
       end

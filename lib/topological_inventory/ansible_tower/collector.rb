@@ -67,6 +67,10 @@ module TopologicalInventory
            service_credential_types]
       end
 
+      def parser_class
+        TopologicalInventory::AnsibleTower::Parser
+      end
+
       def inventory_name
         "AnsibleTower"
       end

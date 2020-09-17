@@ -117,6 +117,7 @@ module TopologicalInventory
         def refresh_part_on_premise(_tasks_id, query_params)
           refresh_state_started_at = Time.now.utc
           receptor_params = {:accept_encoding => 'gzip', :fetch_all_pages => true}
+          receptor_params[:apply_filter] = parser_class.receptor_filter_service_instances
 
           receiver = TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver.new(self, connection,
                                                                                      'service_instances',

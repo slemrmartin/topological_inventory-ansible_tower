@@ -8,7 +8,6 @@ module TopologicalInventory::AnsibleTower
 
         extra = {
           :type                    => template_hash[:template_type],
-          :ask_variables_on_launch => template.ask_variables_on_launch,
           :ask_inventory_on_launch => template.ask_inventory_on_launch,
           :survey_enabled          => template.survey_enabled,
         }
@@ -16,12 +15,6 @@ module TopologicalInventory::AnsibleTower
         if template_hash[:template_type].to_s == 'job_template'
           extra = extra.merge(
             :ask_credential_on_launch => template.ask_credential_on_launch,
-            :ask_diff_mode_on_launch  => template.ask_diff_mode_on_launch,
-            :ask_job_type_on_launch   => template.ask_job_type_on_launch,
-            :ask_limit_on_launch      => template.ask_limit_on_launch,
-            :ask_skip_tags_on_launch  => template.ask_skip_tags_on_launch,
-            :ask_tags_on_launch       => template.ask_tags_on_launch,
-            :ask_verbosity_on_launch  => template.ask_verbosity_on_launch
           )
         end
 
@@ -46,6 +39,26 @@ module TopologicalInventory::AnsibleTower
         end
 
         service_offering
+      end
+
+      def self.included(klass)
+        klass.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def receptor_filter_service_offerings
+          receptor_filter_list(:fields         => %i[id
+                                                     ask_credential_on_launch
+                                                     ask_inventory_on_launch
+                                                     created
+                                                     description
+                                                     name
+                                                     inventory
+                                                     survey_enabled
+                                                     type],
+                               :related        => %i[inventory],
+                               :summary_fields => %i[credentials])
+        end
       end
     end
   end

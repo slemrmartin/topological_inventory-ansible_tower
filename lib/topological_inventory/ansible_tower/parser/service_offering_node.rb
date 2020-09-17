@@ -37,9 +37,36 @@ module TopologicalInventory::AnsibleTower
 
         offering_node[:credentials].to_a.each do |credential|
           collections.service_offering_node_service_credentials.build(
-              :service_offering_node => lazy_find(:service_offering_nodes, :source_ref => node.id.to_s),
-              :service_credential    => lazy_find(:service_credentials, :source_ref => credential.id.to_s)
+            :service_offering_node => lazy_find(:service_offering_nodes, :source_ref => node.id.to_s),
+            :service_credential    => lazy_find(:service_credentials, :source_ref => credential.id.to_s)
           )
+        end
+      end
+
+      def self.included(klass)
+        klass.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def receptor_filter_service_offering_nodes
+          receptor_filter_list(:fields         => %i[id
+                                                     always_nodes
+                                                     created
+                                                     failure_nodes
+                                                     job_tags
+                                                     job_type
+                                                     limit
+                                                     modified
+                                                     name
+                                                     inventory
+                                                     skip_tags
+                                                     success_nodes],
+                               :related        => %i[always_nodes
+                                                     failure_nodes
+                                                     inventory
+                                                     success_nodes],
+                               :summary_fields => %i[unified_job_template
+                                                     workflow_job_template])
         end
       end
     end

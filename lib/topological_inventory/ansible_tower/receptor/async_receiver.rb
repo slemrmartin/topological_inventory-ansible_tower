@@ -35,7 +35,7 @@ module TopologicalInventory::AnsibleTower
           # Exceptions can be raised by synchronous requests inside transformation
           parsable_entity = transformation ? transformation.call(entity) : entity
           parser.send("parse_#{entity_type.singularize}", parsable_entity)
-        rescue ReceptorController::Client::Error => exception
+        rescue => exception
           # Archiving when error occurred isn't wanted, skipping sweep
           sweeping_enabled.value = false
 

@@ -26,7 +26,7 @@ module TopologicalInventory::AnsibleTower
         refresh_state_uuid, refresh_state_started_at, refresh_state_part_collected_at = SecureRandom.uuid, Time.now.utc, nil
 
         logger.collecting(:start, source, entity_type, refresh_state_uuid)
-        parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => tower_hostname)
+        parser = parser_class.new(:tower_url => tower_hostname)
 
         cnt, sweep_scope, total_parts = 0, Set.new, 0
         # each on ansible_tower_client's enumeration makes pagination requests by itself
@@ -45,7 +45,7 @@ module TopologicalInventory::AnsibleTower
             save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
             sweep_scope.merge(parser.collections.values.map(&:name))
             # re-init
-            parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => tower_hostname)
+            parser = parser_class.new(:tower_url => tower_hostname)
             cnt    = 0
           end
         end

@@ -20,6 +20,29 @@ module TopologicalInventory::AnsibleTower
           )
         )
       end
+
+      def self.included(klass)
+        klass.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def receptor_filter_service_inventories
+          receptor_filter_list(:fields  => %i[id
+                                              created
+                                              description
+                                              host_filter
+                                              inventory_sources_with_failures
+                                              kind
+                                              modified
+                                              name
+                                              organization
+                                              pending_deletion
+                                              total_inventory_sources
+                                              type
+                                              variables],
+                               :related => %i[organization])
+        end
+      end
     end
   end
 end
