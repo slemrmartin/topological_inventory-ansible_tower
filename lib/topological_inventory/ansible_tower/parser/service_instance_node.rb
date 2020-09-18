@@ -46,6 +46,7 @@ module TopologicalInventory::AnsibleTower
 
       module ClassMethods
         def receptor_filter_service_instance_nodes
+          # related[:credentials] are used in get_service_instance_nodes as a subrequest
           receptor_filter_list(:fields         => %i[id
                                                      always_nodes
                                                      created
@@ -59,6 +60,7 @@ module TopologicalInventory::AnsibleTower
                                                      skip_tags
                                                      success_nodes],
                                :related        => %i[always_nodes
+                                                     credentials
                                                      failure_nodes
                                                      inventory
                                                      success_nodes],

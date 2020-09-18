@@ -7,7 +7,7 @@ module TopologicalInventory::AnsibleTower
         service_inventory = lazy_find(:service_inventories, :source_ref => template.inventory_id.to_s) if template.respond_to?(:inventory_id)
 
         extra = {
-          :type                    => template_hash[:template_type],
+          :type                    => template.type.to_sym,
           :ask_inventory_on_launch => template.ask_inventory_on_launch,
           :survey_enabled          => template.survey_enabled,
         }

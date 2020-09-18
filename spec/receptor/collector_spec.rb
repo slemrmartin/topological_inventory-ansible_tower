@@ -40,12 +40,13 @@ RSpec.describe TopologicalInventory::AnsibleTower::Receptor::Collector do
       it "invokes on-premise requests" do
         expect(TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver).to receive(:new).and_return(receiver)
 
+        apply_filter = {:results => "results[].{id:id,ask_credential_on_launch:ask_credential_on_launch,ask_inventory_on_launch:ask_inventory_on_launch,created:created,description:description,name:name,inventory:inventory,survey_enabled:survey_enabled,type:type,related:{inventory:related.inventory},summary_fields:{credentials:summary_fields.credentials}}"}
         expect(subject).to(receive(:get_service_offerings)
                              .with(connection,
                                    {:page_size => subject.send(:limits)[entity_type]},
                                    {:on_premise        => true,
                                     :receptor_receiver => receiver,
-                                    :receptor_params   => {:accept_encoding => 'gzip', :fetch_all_pages => true}}))
+                                    :receptor_params   => {:accept_encoding => 'gzip', :apply_filter => apply_filter, :fetch_all_pages => true}}))
 
         subject.collector_thread(connection, entity_type)
       end

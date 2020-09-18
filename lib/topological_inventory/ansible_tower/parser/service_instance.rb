@@ -63,6 +63,7 @@ module TopologicalInventory::AnsibleTower
                                                      inventory
                                                      started
                                                      status
+                                                     type
                                                      unified_job_template],
                                :related        => %i[inventory
                                                      unified_job_template],
