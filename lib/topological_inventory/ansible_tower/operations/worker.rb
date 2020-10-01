@@ -22,7 +22,7 @@ module TopologicalInventory
             log_with(message.payload&.fetch_path('request_context', 'x-rh-insights-request-id')) do
               if ASYNC_MESSAGES.include?(message.message)
                 logger.debug("Queuing #{message.message} message for asynchronous processing...")
-                async_queue << message
+                async_worker.enqueue(message)
               else
                 model, method = message.message.to_s.split(".")
                 logger.info("Received message #{model}##{method}, #{message.payload}")
@@ -35,7 +35,7 @@ module TopologicalInventory
           logger.error("#{err.cause}\n#{err.backtrace.join("\n")}")
         ensure
           client&.close
-          async_worker&.exit
+          async_worker&.stop
           TopologicalInventory::AnsibleTower::ConnectionManager.stop_receptor_client
         end
 
@@ -50,11 +50,7 @@ module TopologicalInventory
         end
 
         def async_worker
-          @async_worker ||= TopologicalInventory::Providers::Common::Operations::AsyncWorker.new(async_queue, Processor).run
-        end
-
-        def async_queue
-          @async_queue ||= Queue.new
+          @async_worker ||= TopologicalInventory::Providers::Common::Operations::AsyncWorker.new(Processor)
         end
 
         def process_message(message)
@@ -71,7 +67,7 @@ module TopologicalInventory
 
         def start_workers
           TopologicalInventory::AnsibleTower::ConnectionManager.start_receptor_client
-          async_worker
+          async_worker.start
         end
       end
     end
