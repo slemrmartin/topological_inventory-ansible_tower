@@ -88,7 +88,7 @@ module TopologicalInventory
       end
 
       def refresh_finished(refresh_type)
-        msg = "Refresh finished | :type => #{refresh_type.to_s}"
+        msg = "Refresh finished | :type => #{refresh_type}"
         if refresh_type == :partial_refresh
           scheduler.partial_refresh_finished!(source)
         else

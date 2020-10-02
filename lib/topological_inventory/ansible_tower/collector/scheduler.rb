@@ -20,9 +20,9 @@ module TopologicalInventory
         end
 
         def initialize
-          self.full_refresh_frequency    = ENV['COLLECTOR_FULL_REFRESH_FREQUENCY'] || 120
+          self.full_refresh_frequency    = (ENV['COLLECTOR_FULL_REFRESH_FREQUENCY'] || 3600).to_i
           self.timestamps                = Concurrent::Map.new
-          self.partial_refresh_frequency = ENV['COLLECTOR_PARTIAL_REFRESH_FREQUENCY'] || 60
+          self.partial_refresh_frequency = (ENV['COLLECTOR_PARTIAL_REFRESH_FREQUENCY'] || 300).to_i
         end
 
         def add_source(source_uid)

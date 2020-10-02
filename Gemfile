@@ -26,5 +26,6 @@ group :development, :test do
   gem "rubocop-performance", "~> 1.8"
   gem "rubocop-rails", "~> 2.8"
   gem "simplecov", "~> 0.17.1"
+  gem "timecop", "~> 0.9.1"
   gem "webmock"
 end

@@ -83,8 +83,8 @@ ReceptorController::Client.configure do |config|
 end
 
 TopologicalInventory::AnsibleTower::Collector::Scheduler.configure do |config|
-  config.full_refresh_frequency = ENV['COLLECTOR_FULL_REFRESH_FREQUENCY'] || 3600
-  config.partial_refresh_frequency = ENV['COLLECTOR_PARTIAL_REFRESH_FREQUENCY'] || ENV['COLLECTOR_POLL_TIME'] || 300
+  config.full_refresh_frequency = (ENV['COLLECTOR_FULL_REFRESH_FREQUENCY'] || 3600).to_i
+  config.partial_refresh_frequency = (ENV['COLLECTOR_PARTIAL_REFRESH_FREQUENCY'] || ENV['COLLECTOR_POLL_TIME'] || 300).to_i
 end
 
 
