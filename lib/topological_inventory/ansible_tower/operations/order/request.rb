@@ -1,12 +1,12 @@
 require "topological_inventory-api-client"
 require "topological_inventory/providers/common/mixins/topology_api"
-require "topological_inventory/ansible_tower/operations/ordering/ansible_tower_client"
+require "topological_inventory/ansible_tower/operations/ansible_tower_client"
 
 module TopologicalInventory
   module AnsibleTower
     module Operations
-      module Ordering
-        class Order
+      module Order
+        class Request
           include Logging
           include TopologicalInventory::Providers::Common::Mixins::TopologyApi
 
@@ -66,15 +66,15 @@ module TopologicalInventory
           end
 
           def ansible_tower_client(source_id, task_id, identity)
-            Ordering::AnsibleTowerClient.new(source_id, task_id, identity)
+            TopologicalInventory::AnsibleTower::Operations::AnsibleTowerClient.new(source_id, task_id, identity)
           end
 
           # Type defined by collector here:
-          # lib/topological_inventory/ansible_tower/parser/ordering.rb:12
+          # lib/topological_inventory/ansible_tower/parser/service_offering.rb:12
           def parse_svc_offering_type(service_offering)
             job_type = service_offering.extra[:type] if service_offering.extra.present?
 
-            raise "Missing ordering's type: #{service_offering.inspect}" if job_type.blank?
+            raise "Missing service_offerings's type: #{service_offering.inspect}" if job_type.blank?
 
             job_type
           end

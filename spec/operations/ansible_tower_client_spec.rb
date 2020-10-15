@@ -1,6 +1,6 @@
-require "topological_inventory/ansible_tower/operations/ordering/ansible_tower_client"
+require "topological_inventory/ansible_tower/operations/ansible_tower_client"
 
-RSpec.describe TopologicalInventory::AnsibleTower::Operations::Ordering::AnsibleTowerClient do
+RSpec.describe TopologicalInventory::AnsibleTower::Operations::AnsibleTowerClient do
   let(:order_params) do
     {
       'service_plan_id'             => 1,

@@ -1,4 +1,4 @@
-require "topological_inventory/ansible_tower/operations/ordering/order"
+require "topological_inventory/ansible_tower/operations/order/request"
 require "topological_inventory/ansible_tower/operations/applied_inventories/request"
 
 module TopologicalInventory
@@ -13,7 +13,7 @@ module TopologicalInventory
         end
 
         def order
-          Ordering::Order.new(params, identity).run
+          Order::Request.new(params, identity).run
         end
 
         def applied_inventories

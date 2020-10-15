@@ -1,7 +1,7 @@
 require "topological_inventory-api-client"
-require "topological_inventory/ansible_tower/operations/ordering/order"
+require "topological_inventory/ansible_tower/operations/order/request"
 
-RSpec.describe TopologicalInventory::AnsibleTower::Operations::Ordering::Order do
+RSpec.describe TopologicalInventory::AnsibleTower::Operations::Order::Request do
   context "#order" do
     let(:subject)  { described_class.new(params, identity) }
     let(:identity) { {"account_number" => "12345"} }
@@ -26,7 +26,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Ordering::Order d
       }
     end
 
-    let(:ansible_tower_client) { TopologicalInventory::AnsibleTower::Operations::Ordering::AnsibleTowerClient.new('1', params['task_id']) }
+    let(:ansible_tower_client) { TopologicalInventory::AnsibleTower::Operations::AnsibleTowerClient.new('1', params['task_id']) }
 
     it "ordering the service offering" do
       expect(subject).to receive(:update_task).with(1, :state => "running", :status => "ok")
