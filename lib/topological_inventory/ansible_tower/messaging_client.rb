@@ -2,31 +2,9 @@ require "manageiq-messaging"
 
 module TopologicalInventory
   module AnsibleTower
-    class MessagingClient
+    class MessagingClient < TopologicalInventory::Providers::Common::MessagingClient
       OPERATIONS_QUEUE_NAME = "platform.topological-inventory.operations-ansible-tower".freeze
       REFRESH_QUEUE_NAME = "platform.topological-inventory.collector-ansible-tower".freeze
-
-      # Kafka host name
-      attr_accessor :queue_host
-      # Kafka port
-      attr_accessor :queue_port
-
-      def initialize
-        @queue_host = 'localhost'
-        @queue_port = 9092
-      end
-
-      def self.default
-        @@default ||= new
-      end
-
-      def self.configure
-        if block_given?
-          yield(default)
-        else
-          default
-        end
-      end
 
       # Instance of messaging client for Worker
       def worker_listener
