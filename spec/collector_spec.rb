@@ -3,11 +3,12 @@ require 'topological_inventory/ansible_tower/collector/scheduler'
 RSpec.describe TopologicalInventory::AnsibleTower::Collector do
   let(:source_uid) { '7b901ca3-5414-4476-8d48-a722c1493de0' }
   let(:logger) { double('Logger').as_null_object }
+  let(:metrics) { double('Metrics') }
   let(:scheduler) { TopologicalInventory::AnsibleTower::Collector::Scheduler.new }
 
   subject do
     described_class.new(source_uid,
-                        nil,
+                        metrics,
                         :poll_time => 1)
 
   end
@@ -38,6 +39,13 @@ RSpec.describe TopologicalInventory::AnsibleTower::Collector do
 
       allow(scheduler).to receive(:do_refresh?).and_return(true)
       subject.collect!
+    end
+  end
+
+  describe "#refresh_finished" do
+    it "catches an exception if called without refresh_start" do
+      expect(metrics).to receive(:record_error)
+      subject.send(:refresh_finished, :partial_refresh)
     end
   end
 end

@@ -95,6 +95,9 @@ module TopologicalInventory
           scheduler.full_refresh_finished!(source)
         end
         logger.info("#{msg}, :source_uid => #{source}")
+      rescue => e
+        logger.error("#{msg} | #{e.message}\n#{e.backtrace.join('\n')}")
+        metrics&.record_error
       end
 
       # Last time of partial refresh, used in API calls
