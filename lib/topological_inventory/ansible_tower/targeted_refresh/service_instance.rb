@@ -48,12 +48,12 @@ module TopologicalInventory
             tasks[task['task_id']] = task['source_ref']
 
             if tasks.length == REFS_PER_REQUEST_LIMIT
-              refresh_part(tasks, @refresh_state_uuid, SecureRandom.uuid)
+              refresh_part(tasks)
               tasks = {}
             end
           end
 
-          refresh_part(tasks, @refresh_state_uuid, SecureRandom.uuid) unless tasks.empty?
+          refresh_part(tasks) unless tasks.empty?
 
           archive_not_received_service_instances unless on_premise?
         rescue => err
@@ -95,7 +95,7 @@ module TopologicalInventory
           is_missing
         end
 
-        def refresh_part(tasks, refresh_state_uuid, refresh_state_part_uuid)
+        def refresh_part(tasks)
           tasks_id = tasks.keys.join(' | id: ')
 
           # API request, nodes and jobs under workflow job not needed
@@ -108,19 +108,19 @@ module TopologicalInventory
           @source_refs_requested += tasks.values
 
           if on_premise?
-            refresh_part_on_premise(tasks_id, refresh_state_uuid, query_params)
+            refresh_part_on_premise(tasks_id, query_params)
           else
-            refresh_part_cloud(tasks_id, refresh_state_uuid, refresh_state_part_uuid, query_params)
+            refresh_part_cloud(tasks_id, query_params)
           end
         end
 
-        def refresh_part_on_premise(_tasks_id, refresh_state_uuid, query_params)
+        def refresh_part_on_premise(_tasks_id, query_params)
           refresh_state_started_at = Time.now.utc
           receptor_params = {:accept_encoding => 'gzip', :fetch_all_pages => true}
 
           receiver = TopologicalInventory::AnsibleTower::Receptor::AsyncReceiver.new(self, connection,
                                                                                      'service_instances',
-                                                                                     refresh_state_uuid,
+                                                                                     @refresh_state_uuid,
                                                                                      refresh_state_started_at,
                                                                                      :sweeping_enabled => false)
           get_service_instances(connection, query_params,
@@ -129,7 +129,7 @@ module TopologicalInventory
                                 :receptor_params   => receptor_params)
         end
 
-        def refresh_part_cloud(tasks_id, refresh_state_uuid, refresh_state_part_uuid, query_params)
+        def refresh_part_cloud(tasks_id, query_params)
           parser = TopologicalInventory::AnsibleTower::Parser.new(:tower_url => tower_hostname)
 
           get_service_instances(connection, query_params).each do |service_instance|
@@ -138,7 +138,7 @@ module TopologicalInventory
 
           # Sending to Ingress API
           logger.info_ext(operation, "Task[ id: #{tasks_id} ] Sending to Ingress API...")
-          save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid)
+          save_inventory(parser.collections.values, inventory_name, schema_name, @refresh_state_uuid, SecureRandom.uuid)
 
           remember_received_service_instances(parser)
 
@@ -147,18 +147,18 @@ module TopologicalInventory
 
         def connection
           @connection ||= begin
-                            tower_user = authentication.username unless on_premise?
-                            tower_passwd = authentication.password unless on_premise?
-                            account_number = account_number_by_identity(identity)
+            tower_user     = authentication.username unless on_premise?
+            tower_passwd   = authentication.password unless on_premise?
+            account_number = account_number_by_identity(identity)
 
-                            connection_manager.connect(
-                              :base_url       => full_hostname(endpoint),
-                              :username       => tower_user,
-                              :password       => tower_passwd,
-                              :receptor_node  => endpoint.receptor_node.to_s.strip,
-                              :account_number => account_number
-                            )
-                          end
+            connection_manager.connect(
+              :base_url       => full_hostname(endpoint),
+              :username       => tower_user,
+              :password       => tower_passwd,
+              :receptor_node  => endpoint.receptor_node.to_s.strip,
+              :account_number => account_number
+            )
+          end
         end
 
         def set_connection_data!
@@ -188,9 +188,9 @@ module TopologicalInventory
                                                                                        :source_ref  => source_ref)
               collection.data << svc_instance
             end
-            logger.info("ServiceInstance#refresh - Archiving (source_refs: #{not_received.join(',')}). Jobs were deleted...")
+            logger.info_ext(operation, "Archiving (source_refs: #{not_received.join(',')}). Jobs were deleted...")
             save_inventory([collection], inventory_name, schema_name, @refresh_state_uuid, SecureRandom.uuid)
-            logger.info("ServiceInstance#refresh - Archiving (source_refs: #{not_received.join(',')}). Complete")
+            logger.info_ext(operation, "Archiving (source_refs: #{not_received.join(',')}). Complete")
           end
         end
 
