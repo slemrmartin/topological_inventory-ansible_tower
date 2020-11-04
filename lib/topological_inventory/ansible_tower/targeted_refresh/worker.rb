@@ -10,6 +10,10 @@ module TopologicalInventory
       class Worker
         include Logging
 
+        def initialize(metrics)
+          self.metrics = metrics
+        end
+
         def run
           TopologicalInventory::AnsibleTower::ConnectionManager.start_receptor_client
 
@@ -33,6 +37,8 @@ module TopologicalInventory
 
         private
 
+        attr_accessor :metrics
+
         def client(renew: false)
           @client = nil if renew
 
@@ -48,9 +54,10 @@ module TopologicalInventory
           payload = JSON.parse(message.payload) if message.payload.present?
 
           logger.info("Received message #{model}##{method}, #{payload}")
-          TargetedRefresh::Processor.process!(message, payload)
+          TargetedRefresh::Processor.process!(message, payload, metrics)
         rescue JSON::ParserError
           logger.error("#{model}##{method} - Failed to parse payload: #{message.payload}")
+          metrics&.record_error
           raise
         rescue => err
           tasks_id = if payload
@@ -58,6 +65,7 @@ module TopologicalInventory
                        ids.compact!
                      end
           logger.error("#{model}##{method} - Task[ id: #{tasks_id.to_a.join(' | id: ')} ] #{err.class.name}\n#{err.message}\n#{err}\n#{err.backtrace.join("\n")}")
+          metrics&.record_error
           raise
         ensure
           message.ack
