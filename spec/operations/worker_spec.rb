@@ -11,6 +11,7 @@ RSpec.describe TopologicalInventory::AnsibleTower::Operations::Worker do
       allow(ManageIQ::Messaging::Client).to receive(:open).and_return(client)
       allow(client).to receive(:close)
       allow(subject).to receive(:logger).and_return(double('null_object').as_null_object)
+      TopologicalInventory::AnsibleTower::MessagingClient.class_variable_set(:@@default, nil)
     end
 
     it "calls subscribe_messages on the right queue" do
