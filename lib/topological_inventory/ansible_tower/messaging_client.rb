@@ -11,14 +11,13 @@ module TopologicalInventory
         @worker_listener ||= ManageIQ::Messaging::Client.open(worker_listener_opts)
       end
 
-      def targeted_refresh_listener
-        @targeted_refresh_listener ||= ManageIQ::Messaging::Client.open(targeted_refresh_listener_opts).tap do |client|
-          # persistent workers by pod hostname, this will prevent rebalances.
-          client.send(:kafka_client)[:"group.instance.id"] = ENV['HOSTNAME']
-
-          # 30 second timeout, after this the worker of the old hostname (ie in the event of a redeploy) will be removed and the topic will be rebalanced.
-          client.send(:kafka_client)[:"session.timeout.ms"] = 30 * 1000
+      def targeted_refresh_listener(renew: false)
+        if renew
+          @targeted_refresh_listener&.close
+          @targeted_refresh_listener = nil
         end
+
+        @targeted_refresh_listener ||= ManageIQ::Messaging::Client.open(targeted_refresh_listener_opts)
       end
 
       def worker_listener_queue_opts
