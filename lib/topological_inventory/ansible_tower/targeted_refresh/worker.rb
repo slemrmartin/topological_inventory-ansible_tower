@@ -58,7 +58,6 @@ module TopologicalInventory
         rescue JSON::ParserError
           logger.error("#{model}##{method} - Failed to parse payload: #{message.payload}")
           metrics&.record_error
-          raise
         rescue => err
           tasks_id = if payload
                        ids = payload['params'].to_a.collect { |task| task['task_id'] }
@@ -66,7 +65,6 @@ module TopologicalInventory
                      end
           logger.error("#{model}##{method} - Task[ id: #{tasks_id.to_a.join(' | id: ')} ] #{err.class.name}\n#{err.message}\n#{err}\n#{err.backtrace.join("\n")}")
           metrics&.record_error
-          raise
         ensure
           message.ack
         end

@@ -76,7 +76,7 @@ Signal.trap("TERM") do
 end
 
 begin
-  targeted_collector = TopologicalInventory::AnsibleTower::TargetedRefresh::Worker.new
+  targeted_collector = TopologicalInventory::AnsibleTower::TargetedRefresh::Worker.new(metrics)
   targeted_collector.run
 rescue => err
   puts err

@@ -13,6 +13,8 @@ module TopologicalInventory::AnsibleTower
       attr_accessor :transformation
       attr_reader :connection, :entity_type, :refresh_state_uuid, :refresh_state_started_at, :sweeping_enabled, :sweep_scope, :total_parts
 
+      delegate :metrics, :to => :collector
+
       def initialize(collector, connection, entity_type, refresh_state_uuid, refresh_state_started_at, sweeping_enabled: true)
         self.async_requests_remaining = Concurrent::AtomicFixnum.new
         self.collector = collector
@@ -42,7 +44,7 @@ module TopologicalInventory::AnsibleTower
           msg = "[ERROR] Collecting #{entity_type}, :source_uid => #{collector.send(:source)}, :refresh_state_uuid => #{refresh_state_uuid}); MSG ID: #{msg_id}, "
           msg += ":message => #{exception.message}\n#{exception.backtrace.join("\n")}"
           logger.error(msg)
-          collector.metrics&.record_error(:receptor_error_response)
+          metrics&.record_error(:receptor_error_response)
         ensure
           collector.response_received!
         end

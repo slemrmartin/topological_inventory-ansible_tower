@@ -1,12 +1,11 @@
-require "prometheus_exporter"
-require "prometheus_exporter/server"
-require "prometheus_exporter/client"
-require 'prometheus_exporter/instrumentation'
+require 'topological_inventory/providers/common/metrics'
 
 module TopologicalInventory
   module AnsibleTower
     class Collector
       class Metrics < TopologicalInventory::Providers::Common::Metrics
+        ERROR_TYPES = %i[general cloud receptor receptor_waiting receptor_timeout receptor_error_response].freeze
+
         def initialize(port = 9394)
           super(port)
         end

@@ -57,7 +57,7 @@ module TopologicalInventory
           archive_not_received_service_instances unless on_premise?
         rescue => err
           metrics_err_type = on_premise? ? :receptor : :cloud unless on_premise?.nil?
-          metrics&.record_error(metrics_err_type)
+          metrics&.record_error(metrics_err_type || :general)
           logger.error_ext(operation, "Error: #{err.message}\n#{err.backtrace.join("\n")}")
         end
 
@@ -76,7 +76,7 @@ module TopologicalInventory
           logger.info_ext(operation, "Finished collecting of #{entity_type} (#{refresh_state_uuid}). Total parts: #{total_parts}")
           @parts_received_cnt.increment
 
-          archive_not_received_service_instances if @parts_requested_cnt == @parts_received_cnt.value
+          archive_not_received_service_instances if @parts_requested_cnt.value == @parts_received_cnt.value
         end
 
         private
