@@ -56,7 +56,7 @@ module TopologicalInventory
 
           archive_not_received_service_instances unless on_premise?
         rescue => err
-          metrics_err_type = on_premise? ? :receptor : :cloud unless on_premise?.nil?
+          metrics_err_type = on_premise? ? :receptor : :cloud unless endpoint.nil?
           metrics&.record_error(metrics_err_type || :general)
           logger.error_ext(operation, "Error: #{err.message}\n#{err.backtrace.join("\n")}")
         end

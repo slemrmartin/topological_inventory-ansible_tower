@@ -106,8 +106,6 @@ if args[:config].nil?
 
   scheduler = TopologicalInventory::AnsibleTower::Collector::Scheduler.default
   scheduler.add_source(args[:source])
-
-  collector.collect!
 else
   pool = TopologicalInventory::AnsibleTower::CollectorsPool.new(args[:config], metrics, :default_limit => args[:page_size])
 end
