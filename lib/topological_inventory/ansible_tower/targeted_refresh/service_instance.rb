@@ -61,7 +61,7 @@ module TopologicalInventory
           logger.error_ext(operation, "Error: #{err.message}\n#{err.backtrace.join("\n")}")
         end
 
-        def async_save_inventory(refresh_state_uuid, parser)
+        def async_save_inventory(_entity_type, refresh_state_uuid, parser)
           refresh_state_part_collected_at = Time.now.utc
           refresh_state_part_uuid = SecureRandom.uuid
           save_inventory(parser.collections.values, inventory_name, schema_name, refresh_state_uuid, refresh_state_part_uuid, refresh_state_part_collected_at)
